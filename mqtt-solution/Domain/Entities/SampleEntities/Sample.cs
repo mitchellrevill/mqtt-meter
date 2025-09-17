@@ -8,6 +8,7 @@ namespace Domain.Entities.SampleEntities
 {
     public class Sample
     {
+        public long Id { get; set; }
         public int SampleData { get; set; }
     }
 }

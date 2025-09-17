@@ -18,7 +18,7 @@ namespace Infrastructure
         {
             services.AddDbContext<MqttDbContext>(options =>
             {
-                options.UseSqlServer(configuration.GetConnectionString("C365Server"));
+                options.UseSqlServer(configuration.GetConnectionString("MqttDbString"));
             });
 
             services.AddScoped<ISampleRepository, SampleRepository>();
