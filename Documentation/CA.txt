@@ -1,0 +1,27 @@
+Clean Architecture Documentation:
+
+------
+
+IMPORTANT - (Not CA related) When making new files, please make files through visual studio or use the "Solution Explorer" view in visual studio code. 
+Creating .cs files directly from the ide explorer causes .net to not recognize that file belongs to that solution project and therefore when all for of us differ in ide's, there will be hidden files
+
+------
+
+Layers = Domain, Application, Infrastrcture, Presentation + Shared
+
+The layers can only reference their inner layers. Referencing can be found within the .csproj of each of the project folders within the "ProjectReference" tag.
+
+------
+
+Shared = Handles DTOs & Models to be shared
+
+Domain = Handles business entities, atomic data structures, exceptions and models. 
+
+Application = Handless business logic, CQRS abstractions, mappers, interfaces for repositories & services & service implementation 
+
+Infra - Handles implementation of external services such as databases, message brokers, third-party API's
+
+Presentation - Handles interface to the UI and delegates application layer logic. Examples such as web apps, mobile apps & desktop apps and servers. 
+Different patterns can be used such as having one API in this layer to work across all the UI frameworks. This is the ideal pattern we want to follow to achieve brief requirement "multi-platform independency"
+
+------
