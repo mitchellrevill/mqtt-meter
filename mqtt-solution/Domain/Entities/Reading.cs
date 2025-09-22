@@ -6,7 +6,7 @@ public class Reading
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    public DateTime TimeStamp { get; set; } = DateTime.Now;
+    public DateTime TimeStamp { get; set; }
 
     public float Value { get; set; }
 

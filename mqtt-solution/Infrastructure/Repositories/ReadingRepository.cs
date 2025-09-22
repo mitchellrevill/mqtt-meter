@@ -1,29 +1,29 @@
 ﻿using Application.Interfaces.Repositories;
 using Domain.Entities.SampleEntities;
 using Infrastructure.DatabaseContext;
-using Infrastructure.Services;
 using Infrastructure.Services.Mocking;
+using Infrastructure.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using Domain.Entities;
 
 namespace Infrastructure.Repositories
 {
-    public class SampleRepository : ISampleRepository
+    public class ReadingRepository : IReadingRepository
     {
         private readonly MqttDbContext _context;
 
-        public SampleRepository(MqttDbContext context)
+        public ReadingRepository(MqttDbContext context)
         {
             _context = context;
         }
 
-        public async Task<IEnumerable<Sample>> GetAll()
+        public async Task<IEnumerable<Reading>> GetAll()
         {
-            return _context.Sample;
+            return _context.Reading;
         }
     }
 }

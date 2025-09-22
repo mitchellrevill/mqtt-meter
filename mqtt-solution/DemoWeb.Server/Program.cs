@@ -1,5 +1,7 @@
 using Infrastructure;
 using Application;
+using Infrastructure.DatabaseContext;
+using Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +30,14 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+using(var serviceScope = app.Services.CreateScope())
+using(var DbContext = serviceScope.ServiceProvider.GetRequiredService<MqttDbContext>())
+{
+    DbContext.Database.EnsureCreated();
+
+    GeneratorHelper.SeedData(DbContext);
+}
 
 app.MapControllers();
 

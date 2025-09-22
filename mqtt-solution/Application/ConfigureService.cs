@@ -1,4 +1,6 @@
 ﻿using Application.Interfaces;
+using Application.Interfaces.Repositories;
+using Application.Services.ReadingService;
 using Application.Services.SampleService;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -15,6 +17,7 @@ namespace Application
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddScoped<ISampleService, SampleService>();
+            services.AddScoped<IReadingService, ReadingService>();
 
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
