@@ -25,9 +25,9 @@ namespace Infrastructure.Services
 
         public static void SeedData(MqttDbContext context)
         {
-            var fakeReadings = new ReadingGenerator().Generate(50);
+            var fakeClients = new ClientGenerator(context).Generate(50);
 
-            GeneratorHelper.AddEntities<Reading>(fakeReadings, context);
+            GeneratorHelper.AddEntities<Client>(fakeClients, context);
         }
     }
 }

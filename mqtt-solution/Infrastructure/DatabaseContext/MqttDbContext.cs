@@ -18,6 +18,7 @@ namespace Infrastructure.DatabaseContext
 
         public DbSet<Sample> Sample { get; set; }
         public DbSet<Reading> Reading { get; set; }
+        public DbSet<Client> Client { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,6 +26,9 @@ namespace Infrastructure.DatabaseContext
                 .HasKey(a => new { a.Id });
 
             modelBuilder.Entity<Reading>()
+                .HasKey(a => new { a.Id });
+            
+            modelBuilder.Entity<Client>()
                 .HasKey(a => new { a.Id });
         }
     }
