@@ -36,10 +36,5 @@ namespace Infrastructure.IntegrationTests.Data
 
             return builder.Options;
         }
-
-        protected IEnumerable<Reading> GetReadingRepository()
-        {
-            return _dbContext.Reading;
-        }
     }
 }

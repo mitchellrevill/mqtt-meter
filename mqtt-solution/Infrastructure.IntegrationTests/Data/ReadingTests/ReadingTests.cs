@@ -13,7 +13,7 @@ namespace Infrastructure.IntegrationTests.Data.ReadingTests
             
         }
 
-        public async Task GenerateReadings(int count)
+        public void GenerateReadings(int count)
         {
             var mockReadings = new ReadingGenerator().Generate(50);
             GeneratorHelper.AddEntities<Reading>(mockReadings, _dbContext);
@@ -21,13 +21,13 @@ namespace Infrastructure.IntegrationTests.Data.ReadingTests
 
         [Theory]
         [InlineData(50)]
-        public async Task Test_Reading_Generator_Should_Not_Generate_Null(int generateCount)
+        public void Test_Reading_Generator_Should_Not_Generate_Null(int generateCount)
         {
             // Arrange
             List<Reading> mockReadings;
 
             // Act
-            await GenerateReadings(generateCount);
+            GenerateReadings(generateCount);
 
             // Assert
             _dbContext.Reading
@@ -37,13 +37,13 @@ namespace Infrastructure.IntegrationTests.Data.ReadingTests
 
         [Theory]
         [InlineData(50)]
-        public async Task Test_Reading_Generator_Should_Not_Exceed_Limit(int generateCount)
+        public void Test_Reading_Generator_Should_Not_Exceed_Limit(int generateCount)
         {
             // Arrange
             List<Reading> mockReadings;
 
             // Act
-            await GenerateReadings(generateCount);
+            GenerateReadings(generateCount);
 
             // Assert
             _dbContext.Reading
@@ -53,13 +53,13 @@ namespace Infrastructure.IntegrationTests.Data.ReadingTests
 
         [Theory]
         [InlineData(50)]
-        public async Task Test_Reading_Generator_Should_Not_Generate_Negative_Value(int generateCount)
+        public void Test_Reading_Generator_Should_Not_Generate_Negative_Value(int generateCount)
         {
             // Arrange
             List<Reading> mockReadings;
 
             // Act
-            await GenerateReadings(generateCount);
+            GenerateReadings(generateCount);
 
             // Assert
             _dbContext.Reading
@@ -69,13 +69,13 @@ namespace Infrastructure.IntegrationTests.Data.ReadingTests
 
         [Theory]
         [InlineData(50)]
-        public async Task Test_Reading_Generator_Should_Not_Generate_Future_Timestamp(int generateCount)
+        public void Test_Reading_Generator_Should_Not_Generate_Future_Timestamp(int generateCount)
         {
             // Arrange
             List<Reading> mockReadings;
 
             // Act
-            await GenerateReadings(generateCount);
+            GenerateReadings(generateCount);
 
             // Assert
             _dbContext.Reading

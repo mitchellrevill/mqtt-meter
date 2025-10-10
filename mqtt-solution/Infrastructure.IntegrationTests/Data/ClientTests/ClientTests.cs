@@ -14,7 +14,7 @@ namespace Infrastructure.IntegrationTests.Data.ClientTests
             
         }
 
-        public async Task GenerateClients(int count)
+        public void GenerateClients(int count)
         {
             var mockData = new ClientGenerator(_dbContext).Generate(count);
             GeneratorHelper.AddEntities<Client>(mockData, _dbContext);
@@ -22,14 +22,14 @@ namespace Infrastructure.IntegrationTests.Data.ClientTests
 
         [Theory]
         [InlineData(10)]
-        public async Task Test_Clients_Generator_Should_Not_Generate_Null(int generateCount)
+        public void Test_Clients_Generator_Should_Not_Generate_Null(int generateCount)
         {
             // Arrange
             List<Client> mockData;
             IEnumerable<Client> clients;
 
             // Act
-            await GenerateClients(generateCount);
+            GenerateClients(generateCount);
             clients = _dbContext.Client.Include(c => c.Readings);
 
             // Assert
@@ -40,14 +40,14 @@ namespace Infrastructure.IntegrationTests.Data.ClientTests
 
         [Theory]
         [InlineData(10)]
-        public async Task Test_Clients_Generator_Should_Not_Exceed_Limit(int generateCount)
+        public void Test_Clients_Generator_Should_Not_Exceed_Limit(int generateCount)
         {
             // Arrange
             List<Client> mockData;
             IEnumerable<Client> clients;
 
             // Act
-            await GenerateClients(generateCount);
+            GenerateClients(generateCount);
             clients = _dbContext.Client.Include(c => c.Readings);
 
             // Assert
@@ -58,14 +58,14 @@ namespace Infrastructure.IntegrationTests.Data.ClientTests
 
         [Theory]
         [InlineData(10)]
-        public async Task Test_Clients_Generator_Should_Not_Generate_Empty_Readings(int generateCount)
+        public void Test_Clients_Generator_Should_Not_Generate_Empty_Readings(int generateCount)
         {
             // Arrange
             List<Client> mockData;
             IEnumerable<Client> clients;
 
             // Act
-            await GenerateClients(generateCount);
+            GenerateClients(generateCount);
             clients = _dbContext.Client.Include(c => c.Readings);
 
             // Assert
