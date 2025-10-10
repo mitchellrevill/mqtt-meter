@@ -20,7 +20,7 @@ namespace Application.UnitTests.ReadingTests.Queries
         }
 
         [Fact]
-        public async Task foo()
+        public async Task ShouldReturnAllListsAndItems()
         {
             // Arrange
             var query = new GetAllReadingsQuery();
