@@ -1,10 +1,17 @@
 using Server.Hubs;
+using Server.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+
+// Configure RabbitMQ
+var rabbitMqOptions = new RabbitMqOptions();
+builder.Configuration.GetSection("RabbitMQ").Bind(rabbitMqOptions);
+builder.Services.AddSingleton(rabbitMqOptions);
+builder.Services.AddSingleton<RabbitMqConnection>();
 
 // Add CORS policy
 builder.Services.AddCors(options =>
