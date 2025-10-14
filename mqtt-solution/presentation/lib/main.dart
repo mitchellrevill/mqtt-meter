@@ -10,6 +10,14 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home: DashboardPage());
+    return MaterialApp(
+      home: const DashboardPage(),
+      builder: (context, child) {
+        return ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 800, minHeight: 600),
+          child: child!,
+        );
+      },
+    );
   }
 }
