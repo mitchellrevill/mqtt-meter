@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class TotalBillWidget extends StatelessWidget {
-  final double totalAmount;
+  final double? totalAmount;
 
-  const TotalBillWidget({super.key, required this.totalAmount});
+  const TotalBillWidget({super.key, this.totalAmount});
 
   @override
   Widget build(BuildContext context) {
@@ -37,13 +37,22 @@ class TotalBillWidget extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '\$${totalAmount.toStringAsFixed(2)}',
-            style: const TextStyle(
-              color: Colors.white,
+            totalAmount != null ? '\$${totalAmount!.toStringAsFixed(2)}' : '--',
+            style: TextStyle(
+              color: totalAmount != null ? Colors.white : Colors.grey.shade400,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
+          if (totalAmount == null)
+            Text(
+              'No data available',
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
         ],
       ),
     );

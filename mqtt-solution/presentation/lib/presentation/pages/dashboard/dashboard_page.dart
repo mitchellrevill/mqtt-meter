@@ -13,33 +13,11 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
-  // Mock data - will be replaced with real data later
-  bool isConnected = true;
-  double totalBill = 127.45;
-  Duration timeUntilNextReading = const Duration(minutes: 4, seconds: 32);
-
-  List<BillUpdate> billUpdates = [
-    BillUpdate(
-      timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
-      amount: 2.34,
-      energyUsage: 4.2,
-    ),
-    BillUpdate(
-      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      amount: 1.87,
-      energyUsage: 3.1,
-    ),
-    BillUpdate(
-      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-      amount: 3.12,
-      energyUsage: 5.8,
-    ),
-    BillUpdate(
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      amount: 1.45,
-      energyUsage: 2.7,
-    ),
-  ];
+  // Data variables - will be populated from API/MQTT later
+  bool isConnected = false; // Default to disconnected until proven otherwise
+  double? totalBill; // null until data is available
+  Duration? timeUntilNextReading; // null until data is available
+  List<BillUpdate> billUpdates = []; // empty list by default
 
   @override
   void initState() {
@@ -49,7 +27,13 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
     logDebug(
       'Connection status: ${isConnected ? "Connected" : "Disconnected"}',
     );
-    logInfo('Total bill loaded: \$${totalBill.toStringAsFixed(2)}');
+
+    if (totalBill != null) {
+      logInfo('Total bill loaded: \$${totalBill!.toStringAsFixed(2)}');
+    } else {
+      logInfo('No total bill data available');
+    }
+
     logDebug('Loading ${billUpdates.length} bill updates');
 
     // Log each bill update for debugging
@@ -89,9 +73,27 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
                           children: [
                             ConnectionStatusWidget(isConnected: isConnected),
                             const SizedBox(height: 16),
-                            NextReadingCountdownWidget(
-                              timeUntilNext: timeUntilNextReading,
-                            ),
+                            if (timeUntilNextReading != null)
+                              NextReadingCountdownWidget(
+                                timeUntilNext: timeUntilNextReading!,
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade800.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Next reading: --',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade400,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                         // Right side - Total bill
