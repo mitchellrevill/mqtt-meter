@@ -1,0 +1,1 @@
+Contains message models and RabbitMQ connection helper
