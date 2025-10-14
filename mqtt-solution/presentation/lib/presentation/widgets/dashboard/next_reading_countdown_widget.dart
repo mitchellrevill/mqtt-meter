@@ -13,7 +13,7 @@ class NextReadingCountdownWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.deepPurple.shade800.withOpacity(0.6),
+        color: Colors.deepPurple.shade800.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.deepPurple.shade400, width: 1),
       ),

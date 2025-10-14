@@ -21,7 +21,7 @@ class BillUpdatesListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.deepPurple.shade900.withOpacity(0.3),
+        color: Colors.deepPurple.shade900.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.deepPurple.shade600, width: 1),
       ),
@@ -61,7 +61,9 @@ class BillUpdatesListWidget extends StatelessWidget {
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.deepPurple.shade800.withOpacity(0.4),
+                            color: Colors.deepPurple.shade800.withValues(
+                              alpha: 0.4,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
