@@ -1,3 +1,5 @@
+using Server.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
@@ -35,7 +37,6 @@ app.UseCors("AllowAll");
 
 app.UseRouting();
 app.MapControllers();
-
-// TODO: Map SignalR hubs here
+app.MapHub<BillingHub>("/hub/billing");
 
 app.Run();
