@@ -233,3 +233,4 @@ Debug
 obj
 mqtt-solution/obj/
 appsettings.Development.json
+Tasks
