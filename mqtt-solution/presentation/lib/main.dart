@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'presentation/pages/dashboard/dashboard_page.dart';
+import 'config/logger_config.dart';
 
 void main() {
+  // Initialize logger based on build mode
+  LoggerConfig.initializeLogger(isDebugMode: kDebugMode);
+
+  LoggerConfig.logAppLifecycle('Main function started');
+
   runApp(const MainApp());
 }
 
@@ -10,6 +17,8 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    LoggerConfig.logAppLifecycle('MainApp build started');
+
     return MaterialApp(
       home: const DashboardPage(),
       builder: (context, child) {
