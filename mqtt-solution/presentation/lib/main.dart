@@ -20,6 +20,7 @@ class MainApp extends StatelessWidget {
     LoggerConfig.logAppLifecycle('MainApp build started');
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: const DashboardPage(),
       builder: (context, child) {
         return ConstrainedBox(
