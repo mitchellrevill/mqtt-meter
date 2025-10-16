@@ -17,7 +17,7 @@ public class ReadingsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> PostReading([FromBody] ReadingRequest request)
+    public IActionResult PostReading([FromBody] ReadingRequest request)
     {
         try
         {
