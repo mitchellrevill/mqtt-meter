@@ -3,6 +3,7 @@ import '../../widgets/dashboard/connection_status_widget.dart';
 import '../../widgets/dashboard/total_bill_widget.dart';
 import '../../widgets/dashboard/next_reading_countdown_widget.dart';
 import '../../widgets/dashboard/bill_updates_list_widget.dart';
+import '../../../data/services/meter_reading_service.dart';
 import '../../../core/utils/logger_mixin.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -18,6 +19,12 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
   double? totalBill; // null until data is available
   Duration? timeUntilNextReading; // null until data is available
   List<BillUpdate> billUpdates = []; // empty list by default
+
+  // Meter reading service
+  final MeterReadingService _meterService = MeterReadingService();
+
+  // Automatic user ID - no user input needed
+  static const String _automaticUserId = 'user-001';
 
   @override
   void initState() {
@@ -43,7 +50,25 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
       );
     }
 
+    // Automatically start meter readings when the app launches
+    _startAutomaticMeterReadings();
+
     logInfo('Dashboard initialization complete');
+  }
+
+  @override
+  void dispose() {
+    _meterService.stopSendingReadings();
+    super.dispose();
+  }
+
+  void _startAutomaticMeterReadings() {
+    setState(() {
+      isConnected = true;
+    });
+
+    _meterService.startSendingReadings(_automaticUserId);
+    logInfo('Automatically started meter readings for user: $_automaticUserId');
   }
 
   @override
@@ -87,7 +112,9 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  'Next reading: --',
+                                  isConnected
+                                      ? 'Next reading: 30s'
+                                      : 'Next reading: --',
                                   style: TextStyle(
                                     color: Colors.grey.shade400,
                                     fontSize: 14,

@@ -39,7 +39,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Apply CORS before routing for Flutter compatibility
 app.UseCors("AllowAll");
 
 app.UseRouting();
