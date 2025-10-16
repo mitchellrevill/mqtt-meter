@@ -11,31 +11,83 @@ class MeterReadingService {
   String? _currentUserId;
   double _currentReading = 0.0;
 
+  // Countdown tracking
+  int _secondsUntilNextReading = 30;
+  Timer? _countdownTimer;
+  Function(int)? _onCountdownUpdate;
+
   // Singleton pattern
   static final MeterReadingService _instance = MeterReadingService._internal();
   factory MeterReadingService() => _instance;
   MeterReadingService._internal();
 
   // Start sending readings every 30 seconds
-  void startSendingReadings(String userId) {
+  void startSendingReadings(String userId, {Function(int)? onCountdownUpdate}) {
     _currentUserId = userId;
+    _onCountdownUpdate = onCountdownUpdate;
     LoggerConfig.logAppLifecycle('Starting to send readings for user: $userId');
+    LoggerConfig.logAppLifecycle(
+      'Countdown callback registered: ${_onCountdownUpdate != null}',
+    );
 
     // Send initial reading
     _sendReading();
+
+    // Reset countdown and start countdown timer
+    _secondsUntilNextReading = 30;
+    _startCountdownTimer();
 
     // Set up timer to send readings every 30 seconds
     _readingTimer?.cancel();
     _readingTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _sendReading();
+      // Reset countdown when we send a reading
+      _secondsUntilNextReading = 30;
+      LoggerConfig.logAppLifecycle('Reading sent - countdown reset to 30');
     });
+  }
+
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    LoggerConfig.logAppLifecycle(
+      'Starting countdown timer with callback: ${_onCountdownUpdate != null}',
+    );
+
+    // Force immediate callback call to test
+    if (_onCountdownUpdate != null) {
+      _onCountdownUpdate!(_secondsUntilNextReading);
+    }
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsUntilNextReading > 0) {
+        _secondsUntilNextReading--;
+      } else {
+        _secondsUntilNextReading = 30; // Reset when it reaches 0
+      }
+
+      // Notify dashboard of countdown update
+      if (_onCountdownUpdate != null) {
+        try {
+          _onCountdownUpdate!(_secondsUntilNextReading);
+        } catch (e) {
+          LoggerConfig.logAppLifecycle('ERROR calling countdown callback: $e');
+        }
+      } else {
+        LoggerConfig.logAppLifecycle('WARNING: Countdown callback is null!');
+      }
+    });
+
+    LoggerConfig.logAppLifecycle('Countdown timer created and started');
   }
 
   // Stop sending readings
   void stopSendingReadings() {
     LoggerConfig.logAppLifecycle('Stopping meter readings');
     _readingTimer?.cancel();
+    _countdownTimer?.cancel();
     _readingTimer = null;
+    _countdownTimer = null;
+    _onCountdownUpdate = null;
   }
 
   // Send a single reading to the server
@@ -80,4 +132,7 @@ class MeterReadingService {
 
   // Check if readings are being sent
   bool get isActive => _readingTimer?.isActive ?? false;
+
+  // Get current countdown value
+  int get secondsUntilNextReading => _secondsUntilNextReading;
 }

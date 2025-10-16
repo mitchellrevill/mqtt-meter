@@ -67,7 +67,16 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
       isConnected = true;
     });
 
-    _meterService.startSendingReadings(_automaticUserId);
+    // Start meter readings with countdown callback
+    _meterService.startSendingReadings(
+      _automaticUserId,
+      onCountdownUpdate: (seconds) {
+        setState(() {
+          timeUntilNextReading = Duration(seconds: seconds);
+        });
+      },
+    );
+
     logInfo('Automatically started meter readings for user: $_automaticUserId');
   }
 
@@ -98,7 +107,7 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
                           children: [
                             ConnectionStatusWidget(isConnected: isConnected),
                             const SizedBox(height: 16),
-                            if (timeUntilNextReading != null)
+                            if (isConnected && timeUntilNextReading != null)
                               NextReadingCountdownWidget(
                                 timeUntilNext: timeUntilNextReading!,
                               )
@@ -112,9 +121,7 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  isConnected
-                                      ? 'Next reading: 30s'
-                                      : 'Next reading: --',
+                                  'Next reading: --',
                                   style: TextStyle(
                                     color: Colors.grey.shade400,
                                     fontSize: 14,
