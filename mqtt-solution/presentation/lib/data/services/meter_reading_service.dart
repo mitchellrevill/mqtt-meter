@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../../config/logger_config.dart';
+import '../../domain/entities/create_reading_request.dart';
+import '../../domain/entities/api_response.dart';
 
 class MeterReadingService {
-  static const String _baseUrl = 'http://localhost:5006';
+  static const String _baseUrl = 'http://127.0.0.1:5006';
   static const String _readingsEndpoint = '/api/readings';
 
   Timer? _readingTimer;
@@ -90,33 +92,46 @@ class MeterReadingService {
     _onCountdownUpdate = null;
   }
 
-  // Send a single reading to the server
+  // Send a single reading to the server using proper model classes
   Future<void> _sendReading() async {
     if (_currentUserId == null) return;
 
     // Simulate increasing meter reading
     _currentReading += (0.5 + (DateTime.now().millisecond % 100) / 100.0);
 
-    final reading = {
-      'userId': _currentUserId,
-      'kwhSinceLast': double.parse(_currentReading.toStringAsFixed(2)),
-    };
+    // Use proper model class instead of ad-hoc JSON
+    final readingRequest = CreateReadingRequest(
+      userId: _currentUserId!,
+      kwhSinceLast: double.parse(_currentReading.toStringAsFixed(2)),
+    );
 
     try {
       LoggerConfig.logAppLifecycle(
-        'Sending reading: ${reading['kwhSinceLast']} kWh for user: ${reading['userId']}',
+        'Sending reading: ${readingRequest.kwhSinceLast} kWh for user: ${readingRequest.userId}',
       );
 
       final response = await http.post(
         Uri.parse('$_baseUrl$_readingsEndpoint'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(reading),
+        body: json.encode(readingRequest.toJson()),
       );
 
       if (response.statusCode == 200) {
-        LoggerConfig.logAppLifecycle(
-          'Reading sent successfully: ${response.body}',
+        // Parse response using ApiResponse model
+        final apiResponse = ApiResponse<Map<String, dynamic>>.fromJson(
+          json.decode(response.body) as Map<String, dynamic>,
+          (data) => data,
         );
+
+        if (apiResponse.success) {
+          LoggerConfig.logAppLifecycle(
+            'Reading sent successfully: ${apiResponse.message}',
+          );
+        } else {
+          LoggerConfig.logAppLifecycle(
+            'Server reported error: ${apiResponse.message}',
+          );
+        }
       } else {
         LoggerConfig.logAppLifecycle(
           'Failed to send reading. Status: ${response.statusCode}, Body: ${response.body}',
