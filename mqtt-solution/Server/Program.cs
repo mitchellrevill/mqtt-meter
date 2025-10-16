@@ -1,11 +1,20 @@
 using Server.Hubs;
 using Server.Messaging;
+using Application;
+using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+builder.Services.AddHttpClient(); // Add HttpClient factory
+
+// Add Application layer services
+builder.Services.AddApplicationServices();
+
+// Add Infrastructure layer services (repositories, database context)
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Configure RabbitMQ
 var rabbitMqOptions = new RabbitMqOptions();
@@ -27,8 +36,6 @@ builder.Services.AddCors(options =>
 // Add Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-// TODO: Add service registrations here (ConnectionRegistry, BillCalculator, BillingWorker, etc.)
 
 var app = builder.Build();
 
