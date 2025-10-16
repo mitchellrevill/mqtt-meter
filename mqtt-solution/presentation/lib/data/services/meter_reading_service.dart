@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../config/logger_config.dart';
 
 class MeterReadingService {
-  static const String _baseUrl = 'http://127.0.0.1:5006';
+  static const String _baseUrl = 'http://localhost:5006';
   static const String _readingsEndpoint = '/api/readings';
 
   Timer? _readingTimer;
