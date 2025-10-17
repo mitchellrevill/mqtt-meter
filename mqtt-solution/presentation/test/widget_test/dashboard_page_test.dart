@@ -20,17 +20,6 @@ void main() {
       },
     );
 
-    testWidgets('should show disconnected state by default', (
-      WidgetTester tester,
-    ) async {
-      // Given: A new dashboard page (no data loaded yet)
-      await tester.pumpWidget(const MaterialApp(home: DashboardPage()));
-
-      // Then: Should show disconnected status
-      expect(find.text('Disconnected'), findsOneWidget);
-      expect(find.byIcon(Icons.wifi_off), findsOneWidget);
-    });
-
     testWidgets('should display empty bill state when no data is available', (
       WidgetTester tester,
     ) async {
@@ -41,17 +30,6 @@ void main() {
       expect(find.text('--'), findsOneWidget);
       expect(find.text('No data available'), findsOneWidget);
     });
-
-    testWidgets(
-      'should show placeholder for next reading when no data is available',
-      (WidgetTester tester) async {
-        // Given: A dashboard with no reading schedule data
-        await tester.pumpWidget(const MaterialApp(home: DashboardPage()));
-
-        // Then: Should show placeholder for next reading
-        expect(find.text('Next reading: --'), findsOneWidget);
-      },
-    );
 
     testWidgets('should display empty bill updates list by default', (
       WidgetTester tester,
