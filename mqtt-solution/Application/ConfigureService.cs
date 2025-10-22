@@ -1,8 +1,11 @@
-﻿using Application.Interfaces;
+﻿using Application.Behavior;
+using Application.Behaviors;
+using Application.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Services.ClientService;
 using Application.Services.ReadingService;
 using Application.Services.SampleService;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -21,7 +24,14 @@ namespace Application
             services.AddScoped<IReadingService, ReadingService>();
             services.AddScoped<IClientService, ClientService>();
 
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+                cfg.AddOpenBehavior(typeof(LoggingPipelineBehavior<,>));
+                cfg.AddOpenBehavior(typeof(ExceptionHandlingPipelineBehavior<,>));
+            });
+
+            // services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehavior<,>));
 
             return services;
         }
