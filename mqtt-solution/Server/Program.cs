@@ -16,12 +16,6 @@ builder.Services.AddApplicationServices();
 // Add Infrastructure layer services (repositories, database context)
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// Configure RabbitMQ
-var rabbitMqOptions = new RabbitMqOptions();
-builder.Configuration.GetSection("RabbitMQ").Bind(rabbitMqOptions);
-builder.Services.AddSingleton(rabbitMqOptions);
-builder.Services.AddSingleton<RabbitMqConnection>();
-
 // Add CORS policy
 builder.Services.AddCors(options =>
 {
