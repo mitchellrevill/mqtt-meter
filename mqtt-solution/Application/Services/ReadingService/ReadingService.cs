@@ -1,6 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Services.ReadingService.Query.GetAllReadings;
-using Application.Services.SampleService.Query.GetAllSamples;
+using Application.Services.ReadingService.Command.CreateReading;
 using Domain.Entities;
 using Domain.Entities.SampleEntities;
 using MediatR;
@@ -24,6 +24,11 @@ namespace Application.Services.ReadingService
         public async Task<IEnumerable<Reading>> GetAll()
         {
             return await _sender.Send(new GetAllReadingsQuery());
+        }
+
+        public async Task<Reading> CreateAsync(string userId, float value)
+        {
+            return await _sender.Send(new CreateReadingCommand(userId, value));
         }
     }
 }
