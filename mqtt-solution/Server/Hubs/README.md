@@ -1,0 +1,1 @@
+Contains SignalR hub for real time communication
