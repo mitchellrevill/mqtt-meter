@@ -20,13 +20,19 @@ class BillingModel {
   /// Factory constructor to create BillingModel from JSON response
   factory BillingModel.fromJson(Map<String, dynamic> json) {
     return BillingModel(
-      userId: json['userId'] as String,
-      billingPeriodStart: DateTime.parse(json['billingPeriodStart'] as String),
-      billingPeriodEnd: DateTime.parse(json['billingPeriodEnd'] as String),
-      totalKwhUsed: (json['totalKwhUsed'] as num).toDouble(),
-      ratePerKwh: (json['ratePerKwh'] as num).toDouble(),
-      totalAmount: (json['totalAmount'] as num).toDouble(),
-      lastUpdated: DateTime.parse(json['lastUpdated'] as String),
+      userId: json['userId'] as String? ?? 'unknown',
+      billingPeriodStart: json['billingPeriodStart'] != null 
+          ? DateTime.parse(json['billingPeriodStart'] as String)
+          : DateTime.now().subtract(const Duration(days: 30)),
+      billingPeriodEnd: json['billingPeriodEnd'] != null
+          ? DateTime.parse(json['billingPeriodEnd'] as String)
+          : DateTime.now(),
+      totalKwhUsed: (json['totalKwhUsed'] as num?)?.toDouble() ?? 0.0,
+      ratePerKwh: (json['ratePerKwh'] as num?)?.toDouble() ?? 0.15,
+      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
+      lastUpdated: json['lastUpdated'] != null
+          ? DateTime.parse(json['lastUpdated'] as String)
+          : DateTime.now(),
     );
   }
 

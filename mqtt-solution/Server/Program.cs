@@ -1,7 +1,9 @@
 using Server.Hubs;
 using Server.Messaging;
+using Server.Services;
 using Application;
 using Infrastructure;
+using Infrastructure.Mqtt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,15 @@ builder.Services.AddApplicationServices();
 
 // Add Infrastructure layer services (repositories, database context)
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Add MQTT services
+builder.Services.AddRabbitMqMqtt(builder.Configuration);
+
+// Add SignalR bridge
+builder.Services.AddSingleton<IMqttSignalRBridge, MqttSignalRBridge>();
+
+// Add MQTT to SignalR background service
+builder.Services.AddHostedService<MqttToSignalRService>();
 
 // Add CORS policy
 builder.Services.AddCors(options =>
