@@ -16,6 +16,42 @@ DB access layer, extra logic, bill generation etc
 - **Docker Desktop**: Required to run the RabbitMQ MQTT broker in a containerized environment
 - **.NET 8.0 SDK**: Required to build and run the DemoWeb.Server API
 - **PowerShell**: (Optional) For running the automated startup script
+- **Flutter SDK & Visual Studio Code**: (Optional) Required for mobile client development
+
+---
+
+### 1. Install Flutter SDK
+
+1. Download the Flutter SDK Windows installer from the [official Flutter website](https://docs.flutter.dev/get-started/install/windows)
+2. Run the installer and follow the prompts
+3. The installer will:
+   - Extract the Flutter SDK
+   - Add Flutter to your PATH
+   - Run `flutter doctor` to check dependencies
+
+### 2. Run Flutter Doctor
+
+Open a new PowerShell window and run:
+
+```powershell
+flutter doctor
+```
+
+This command checks your environment and displays a report of Flutter installation status. Address any issues flagged with an **[✗]**.
+
+### 3. Install Visual Studio Code Extensions
+
+1. Open **Visual Studio Code**
+2. Go to **Extensions** (Ctrl+Shift+X)
+3. Search for "Flutter" and install the extension by Dart Code
+4. This automatically installs the Dart extension as well
+
+### 4. Verify Installation
+
+1. Open the **Command Palette** in VS Code (Ctrl+Shift+P)
+2. Type `Flutter: New Project` and select **Application**
+3. Choose a location and create a test project
+4. Press **F5** to run the app and verify everything works
 
 ---
 
