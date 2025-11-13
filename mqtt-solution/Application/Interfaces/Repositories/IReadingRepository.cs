@@ -11,5 +11,6 @@ namespace Application.Interfaces.Repositories
     public interface IReadingRepository
     {
         public Task<IEnumerable<Reading>> GetAll();
+        public Task<Reading> AddAsync(Reading reading);
     }
 }

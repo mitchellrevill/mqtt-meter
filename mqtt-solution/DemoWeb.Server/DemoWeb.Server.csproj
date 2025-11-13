@@ -36,6 +36,7 @@
 	  <ProjectReference Include="..\Domain\Domain.csproj" />
 	  <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
 	  <ProjectReference Include="..\Shared\Shared.csproj" />
+	  <ProjectReference Include="..\Infrastructure.Mqtt\Infrastructure.Mqtt.csproj" />
 	</ItemGroup>
 	
 </Project>

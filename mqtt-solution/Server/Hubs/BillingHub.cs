@@ -4,21 +4,33 @@ namespace Server.Hubs;
 
 public class BillingHub : Hub
 {
-    // TODO: Inject ConnectionRegistry service when billing services are implemented
-    // private readonly ConnectionRegistry _connectionRegistry;
+    private readonly ILogger<BillingHub> _logger;
+
+    public BillingHub(ILogger<BillingHub> logger)
+    {
+        _logger = logger;
+    }
 
     public async Task Register(string userId)
     {
-        // TODO: Store mapping using ConnectionRegistry service
+        // Add the connection to a group based on userId
+        await Groups.AddToGroupAsync(Context.ConnectionId, userId);
         
-        // For now, just acknowledge the registration
+        _logger.LogInformation("User {UserId} registered with connection {ConnectionId}", userId, Context.ConnectionId);
+        
+        // Acknowledge the registration
         await Clients.Caller.SendAsync("RegistrationConfirmed", userId);
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        _logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
+        await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        // TODO: Remove mapping using ConnectionRegistry service
-
+        _logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
 }

@@ -1,36 +1,36 @@
 class CreateReadingRequest {
   final String userId;
-  final double kwhSinceLast;
+  final double value;
 
   const CreateReadingRequest({
     required this.userId,
-    required this.kwhSinceLast,
+    required this.value,
   });
 
   /// Convert to JSON for API request body
   Map<String, dynamic> toJson() {
-    return {'userId': userId, 'kwhSinceLast': kwhSinceLast};
+    return {'userId': userId, 'value': value};
   }
 
   /// Factory constructor from JSON (if needed for testing/mocking)
   factory CreateReadingRequest.fromJson(Map<String, dynamic> json) {
     return CreateReadingRequest(
       userId: json['userId'] as String,
-      kwhSinceLast: (json['kwhSinceLast'] as num).toDouble(),
+      value: (json['value'] as num).toDouble(),
     );
   }
 
   /// Create a copy with some fields replaced
-  CreateReadingRequest copyWith({String? userId, double? kwhSinceLast}) {
+  CreateReadingRequest copyWith({String? userId, double? value}) {
     return CreateReadingRequest(
       userId: userId ?? this.userId,
-      kwhSinceLast: kwhSinceLast ?? this.kwhSinceLast,
+      value: value ?? this.value,
     );
   }
 
   @override
   String toString() {
-    return 'CreateReadingRequest(userId: $userId, kwhSinceLast: $kwhSinceLast)';
+    return 'CreateReadingRequest(userId: $userId, value: $value)';
   }
 
   @override
@@ -38,9 +38,9 @@ class CreateReadingRequest {
     if (identical(this, other)) return true;
     return other is CreateReadingRequest &&
         other.userId == userId &&
-        other.kwhSinceLast == kwhSinceLast;
+        other.value == value;
   }
 
   @override
-  int get hashCode => Object.hash(userId, kwhSinceLast);
+  int get hashCode => Object.hash(userId, value);
 }

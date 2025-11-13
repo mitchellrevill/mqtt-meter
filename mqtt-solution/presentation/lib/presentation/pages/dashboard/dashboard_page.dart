@@ -4,6 +4,8 @@ import '../../widgets/dashboard/total_bill_widget.dart';
 import '../../widgets/dashboard/next_reading_countdown_widget.dart';
 import '../../widgets/dashboard/bill_updates_list_widget.dart';
 import '../../../data/services/meter_reading_service.dart';
+import '../../../data/services/signalr_service.dart';
+import '../../../data/services/billing_service.dart';
 import '../../../domain/entities/billing_model.dart';
 import '../../../core/utils/logger_mixin.dart';
 
@@ -28,6 +30,8 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
 
   // Services
   final MeterReadingService _meterService = MeterReadingService();
+  final SignalRService _signalRService = SignalRService();
+  final BillingService _billingService = BillingService();
 
   // Automatic user ID - no user input needed
   static const String _automaticUserId = 'user-001';
@@ -56,8 +60,10 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
       );
     }
 
-    // Automatically start meter readings when the app launches
+    // Automatically start meter readings and SignalR when the app launches
     _startAutomaticMeterReadings();
+    _connectToSignalR();
+    _startFetchingBilling();
 
     logInfo('Dashboard initialization complete');
   }
@@ -65,6 +71,8 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
   @override
   void dispose() {
     _meterService.stopSendingReadings();
+    _signalRService.disconnect();
+    _billingService.stopFetchingBilling();
     super.dispose();
   }
 
@@ -84,6 +92,73 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
     );
 
     logInfo('Automatically started meter readings for user: $_automaticUserId');
+  }
+
+  void _connectToSignalR() async {
+    // Set up SignalR callbacks
+    _signalRService.onConnectionChanged = (connected) {
+      setState(() {
+        isConnected = connected;
+      });
+      logInfo('SignalR connection changed: $connected');
+    };
+
+    _signalRService.onMeterReading = (reading) {
+      logInfo('Received meter reading via SignalR: $reading');
+      
+      // Update bill updates list
+      if (reading.containsKey('Value') && reading.containsKey('Timestamp')) {
+        final value = (reading['Value'] as num).toDouble();
+        final amount = value * ratePerKwh;
+        
+        setState(() {
+          totalKwhUsed += value;
+          totalBill = (totalBill ?? 0.0) + amount;
+          
+          billUpdates.insert(0, BillUpdate(
+            energyUsage: value,
+            amount: amount,
+            timestamp: DateTime.tryParse(reading['Timestamp'].toString()) ?? DateTime.now(),
+          ));
+          
+          // Keep only the last 20 updates
+          if (billUpdates.length > 20) {
+            billUpdates.removeLast();
+          }
+        });
+      }
+    };
+
+    _signalRService.onBillingUpdate = (billing) {
+      setState(() {
+        currentBilling = billing;
+        totalBill = billing.totalAmount;
+        totalKwhUsed = billing.totalKwhUsed;
+      });
+      logInfo('Received billing update via SignalR: \$${billing.totalAmount.toStringAsFixed(2)}');
+    };
+
+    // Connect to SignalR
+    final connected = await _signalRService.connect(_automaticUserId);
+    if (connected) {
+      logInfo('Successfully connected to SignalR');
+    } else {
+      logError('Failed to connect to SignalR', null, null);
+    }
+  }
+
+  void _startFetchingBilling() {
+    _billingService.startFetchingBilling(
+      _automaticUserId,
+      onBillingUpdate: (billing) {
+        setState(() {
+          currentBilling = billing;
+          totalBill = billing.totalAmount;
+          totalKwhUsed = billing.totalKwhUsed;
+        });
+      },
+    );
+    logInfo('Started fetching billing data');
   }
 
   @override

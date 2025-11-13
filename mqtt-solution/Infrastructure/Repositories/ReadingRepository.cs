@@ -25,5 +25,12 @@ namespace Infrastructure.Repositories
         {
             return _context.Reading;
         }
+
+        public async Task<Reading> AddAsync(Reading reading)
+        {
+            await _context.Reading.AddAsync(reading);
+            await _context.SaveChangesAsync();
+            return reading;
+        }
     }
 }
