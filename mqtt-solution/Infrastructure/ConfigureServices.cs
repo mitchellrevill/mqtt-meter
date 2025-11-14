@@ -20,6 +20,7 @@ namespace Infrastructure
             services.AddScoped<ISampleRepository, SampleRepository>();
             services.AddScoped<IReadingRepository, ReadingRepository>();
             services.AddScoped<IClientRepository, ClientRepository>();
+            services.AddScoped<IBillingRepository, BillingRepository>();
 
             return services;
         }

@@ -19,6 +19,7 @@ namespace Infrastructure.DatabaseContext
         public DbSet<Sample> Sample { get; set; }
         public DbSet<Reading> Reading { get; set; }
         public DbSet<Client> Client { get; set; }
+        public DbSet<Bill> Bill { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +31,10 @@ namespace Infrastructure.DatabaseContext
             
             modelBuilder.Entity<Client>()
                 .HasKey(a => new { a.Id });
+
+            modelBuilder.Entity<Bill>()
+                .HasKey(a => new { a.Id });
+
         }
     }
 }
