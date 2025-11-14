@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "presentation" "\0"
+            VALUE "CompanyName", "Red Footed Energy" "\0"
+            VALUE "FileDescription", "Red Footed Energy" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "presentation" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "presentation.exe" "\0"
-            VALUE "ProductName", "presentation" "\0"
+            VALUE "InternalName", "red_footed_energy" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 Red Footed Energy. All rights reserved." "\0"
+            VALUE "OriginalFilename", "red_footed_energy.exe" "\0"
+            VALUE "ProductName", "Red Footed Energy" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

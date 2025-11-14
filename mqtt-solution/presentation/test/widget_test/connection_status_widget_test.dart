@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presentation/presentation/widgets/dashboard/connection_status_widget.dart';
+import 'package:red_footed_energy/presentation/widgets/dashboard/connection_status_widget.dart';
 
 void main() {
   group('ConnectionStatusWidget Tests', () {
@@ -144,8 +144,8 @@ void main() {
                   children: [
                     ConnectionStatusWidget(isConnected: isConnected),
                     ElevatedButton(
-                      onPressed:
-                          () => setState(() => isConnected = !isConnected),
+                      onPressed: () =>
+                          setState(() => isConnected = !isConnected),
                       child: const Text('Toggle Connection'),
                     ),
                   ],

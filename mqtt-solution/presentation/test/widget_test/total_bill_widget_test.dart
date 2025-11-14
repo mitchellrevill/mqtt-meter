@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presentation/presentation/widgets/dashboard/total_bill_widget.dart';
+import 'package:red_footed_energy/presentation/widgets/dashboard/total_bill_widget.dart';
 
 void main() {
   group('TotalBillWidget Tests', () {
