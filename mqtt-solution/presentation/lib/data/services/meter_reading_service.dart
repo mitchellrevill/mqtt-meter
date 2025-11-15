@@ -6,8 +6,8 @@ import '../../domain/entities/create_reading_request.dart';
 import '../../domain/entities/api_response.dart';
 
 class MeterReadingService {
-  static const String _baseUrl = 'http://127.0.0.1:5006';
-  static const String _readingsEndpoint = '/api/readings';
+  static const String _baseUrl = 'http://localhost:5006';
+  static const String _mqttPublishEndpoint = '/api/mqtt/publish/reading';
 
   Timer? _readingTimer;
   String? _currentUserId;
@@ -102,16 +102,16 @@ class MeterReadingService {
     // Use proper model class instead of ad-hoc JSON
     final readingRequest = CreateReadingRequest(
       userId: _currentUserId!,
-      kwhSinceLast: double.parse(_currentReading.toStringAsFixed(2)),
+      value: double.parse(_currentReading.toStringAsFixed(2)),
     );
 
     try {
       LoggerConfig.logAppLifecycle(
-        'Sending reading: ${readingRequest.kwhSinceLast} kWh for user: ${readingRequest.userId}',
+        'Sending reading: ${readingRequest.value} kWh for user: ${readingRequest.userId}',
       );
 
       final response = await http.post(
-        Uri.parse('$_baseUrl$_readingsEndpoint'),
+        Uri.parse('$_baseUrl$_mqttPublishEndpoint'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(readingRequest.toJson()),
       );

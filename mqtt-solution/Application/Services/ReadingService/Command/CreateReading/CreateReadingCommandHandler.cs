@@ -1,11 +1,19 @@
 using Domain.Entities;
 using MediatR;
+using Application.Interfaces.Repositories;
 
 namespace Application.Services.ReadingService.Command.CreateReading
 {
     public class CreateReadingCommandHandler : IRequestHandler<CreateReadingCommand, Reading>
     {
-        public Task<Reading> Handle(CreateReadingCommand request, CancellationToken cancellationToken)
+        private readonly IReadingRepository _readingRepository;
+
+        public CreateReadingCommandHandler(IReadingRepository readingRepository)
+        {
+            _readingRepository = readingRepository;
+        }
+
+        public async Task<Reading> Handle(CreateReadingCommand request, CancellationToken cancellationToken)
         {
             // Create new Reading domain entity
             var reading = new Reading
@@ -14,10 +22,8 @@ namespace Application.Services.ReadingService.Command.CreateReading
                 Value = request.Value
             };
 
-            // TODO: Add repository call to persist the reading when repository is implemented
-            // await _readingRepository.AddAsync(reading);
-
-            return Task.FromResult(reading);
+            // Save to database
+            return await _readingRepository.AddAsync(reading);
         }
     }
 }
