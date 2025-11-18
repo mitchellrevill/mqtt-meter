@@ -1,6 +1,6 @@
 ﻿using Domain.Entities;
 using Domain.Entities.SampleEntities;
-using Infrastructure.Services;
+using Infrastructure.Mqtt.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Infrastructure.DatabaseContext
+namespace Infrastructure.Mqtt.DatabaseContext
 {
     public class MqttDbContext : DbContext
     {

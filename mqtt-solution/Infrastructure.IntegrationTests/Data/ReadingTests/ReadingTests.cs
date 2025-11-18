@@ -1,5 +1,5 @@
-﻿using Infrastructure.Services.Mocking;
-using Infrastructure.Services;
+﻿using Infrastructure.Mqtt.Services.Mocking;
+using Infrastructure.Mqtt.Services;
 using Domain.Entities;
 using FluentAssertions;
 

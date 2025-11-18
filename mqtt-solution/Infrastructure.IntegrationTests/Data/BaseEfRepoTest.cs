@@ -1,8 +1,8 @@
 ﻿using Application.Interfaces.Repositories;
 using Domain.Entities;
-using Infrastructure.DatabaseContext;
-using Infrastructure.Repositories;
-using Infrastructure.Services;
+using Infrastructure.Mqtt.DatabaseContext;
+using Infrastructure.Mqtt.Repositories;
+using Infrastructure.Mqtt.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Infrastructure.IntegrationTests.Data
+namespace Infrastructure.Mqtt.IntegrationTests.Data
 {
     public class BaseEfRepoTest
     {
