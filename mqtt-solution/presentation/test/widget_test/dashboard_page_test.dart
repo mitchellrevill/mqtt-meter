@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presentation/presentation/pages/dashboard/dashboard_page.dart';
-import 'package:presentation/presentation/widgets/dashboard/connection_status_widget.dart';
-import 'package:presentation/presentation/widgets/dashboard/total_bill_widget.dart';
-import 'package:presentation/presentation/widgets/dashboard/bill_updates_list_widget.dart';
+import 'package:red_footed_energy/presentation/pages/dashboard/dashboard_page.dart';
+import 'package:red_footed_energy/presentation/widgets/dashboard/connection_status_widget.dart';
+import 'package:red_footed_energy/presentation/widgets/dashboard/total_bill_widget.dart';
+import 'package:red_footed_energy/presentation/widgets/dashboard/bill_updates_list_widget.dart';
 
 void main() {
   group('DashboardPage Tests', () {
