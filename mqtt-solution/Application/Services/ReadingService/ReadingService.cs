@@ -26,6 +26,12 @@ namespace Application.Services.ReadingService
             return await _sender.Send(new GetAllReadingsQuery());
         }
 
+        public async Task<IEnumerable<Reading>> GetByUserId(string userId)
+        {
+            return await _sender.Send(new GetReadingsByUserQuery(userId));
+        }
+
+
         public async Task<Reading> CreateAsync(string userId, float value)
         {
             return await _sender.Send(new CreateReadingCommand(userId, value));

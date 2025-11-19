@@ -19,7 +19,8 @@ namespace Application.Services.ReadingService.Command.CreateReading
             var reading = new Reading
             {
                 TimeStamp = DateTime.UtcNow,
-                Value = request.Value
+                Value = request.Value,
+                UserId = request.UserId
             };
 
             // Save to database

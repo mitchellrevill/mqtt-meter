@@ -10,4 +10,6 @@ public class Reading
 
     public float Value { get; set; }
 
+    public string UserId { get; set; } = string.Empty;
+
 }
