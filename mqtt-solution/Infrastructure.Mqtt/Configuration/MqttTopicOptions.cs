@@ -28,6 +28,11 @@ public class MqttTopicOptions
     public string AlertTopic { get; set; } = "meters/alerts";
 
     /// <summary>
+    /// Base topic for billing updates
+    /// </summary>
+    public string BillingBaseTopic { get; set; } = "meters/billing";
+
+    /// <summary>
     /// Gets the full topic path for a specific meter reading
     /// </summary>
     public string GetMeterReadingTopic(string clientId) => $"{ReadingsBaseTopic}/{clientId}";
@@ -41,4 +46,9 @@ public class MqttTopicOptions
     /// Gets the wildcard topic for all readings
     /// </summary>
     public string GetAllReadingsTopic() => $"{ReadingsBaseTopic}/#";
+
+    /// <summary>
+    /// Gets the billing update topic for a specific user
+    /// </summary>
+    public string GetBillingUpdateTopic(string userId) => $"{BillingBaseTopic}/{userId}";
 }
