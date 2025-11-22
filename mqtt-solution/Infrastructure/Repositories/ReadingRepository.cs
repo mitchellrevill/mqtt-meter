@@ -26,6 +26,11 @@ namespace Infrastructure.Repositories
             return _context.Reading;
         }
 
+        public async Task<IEnumerable<Reading>> GetByUserId(string userId)
+        {
+            return _context.Reading.Where(r => r.UserId == userId);
+        }
+
         public async Task<Reading> AddAsync(Reading reading)
         {
             await _context.Reading.AddAsync(reading);

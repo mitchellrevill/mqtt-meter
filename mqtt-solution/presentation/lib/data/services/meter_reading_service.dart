@@ -1,20 +1,24 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import '../../config/logger_config.dart';
 import '../../domain/entities/create_reading_request.dart';
 import '../../domain/entities/api_response.dart';
 
 class MeterReadingService {
+  static const int _minIntervalSeconds = 15;
+  static const int _maxIntervalSeconds = 45;
+  final Random _rng = Random();
   static const String _baseUrl = 'http://localhost:5006';
   static const String _mqttPublishEndpoint = '/api/mqtt/publish/reading';
-
+  
   Timer? _readingTimer;
   String? _currentUserId;
   double _currentReading = 0.0;
 
   // Countdown tracking
-  int _secondsUntilNextReading = 30;
+  int _secondsUntilNextReading = _maxIntervalSeconds;
   Timer? _countdownTimer;
   Function(int)? _onCountdownUpdate;
 
@@ -23,7 +27,7 @@ class MeterReadingService {
   factory MeterReadingService() => _instance;
   MeterReadingService._internal();
 
-  // Start sending readings every 30 seconds
+   // Start sending readings between min and max intervals
   void startSendingReadings(String userId, {Function(int)? onCountdownUpdate}) {
     _currentUserId = userId;
     _onCountdownUpdate = onCountdownUpdate;
@@ -35,18 +39,28 @@ class MeterReadingService {
     // Send initial reading
     _sendReading();
 
-    // Reset countdown and start countdown timer
-    _secondsUntilNextReading = 30;
+    _scheduleNextReading();
+  }
+
+  void _scheduleNextReading() {
+    _readingTimer?.cancel();
+
+    final int nextDelay = _rng.nextInt(
+          _maxIntervalSeconds - _minIntervalSeconds + 1,
+        ) +
+        _minIntervalSeconds;
+
+    _secondsUntilNextReading = nextDelay;
     _startCountdownTimer();
 
-    // Set up timer to send readings every 30 seconds
-    _readingTimer?.cancel();
-    _readingTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    _readingTimer = Timer(Duration(seconds: nextDelay), () {
       _sendReading();
-      // Reset countdown when we send a reading
-      _secondsUntilNextReading = 30;
-      LoggerConfig.logAppLifecycle('Reading sent - countdown reset to 30');
+      _scheduleNextReading();
     });
+
+    LoggerConfig.logAppLifecycle(
+      'Next reading scheduled in $nextDelay seconds',
+    );
   }
 
   void _startCountdownTimer() {
@@ -63,8 +77,6 @@ class MeterReadingService {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsUntilNextReading > 0) {
         _secondsUntilNextReading--;
-      } else {
-        _secondsUntilNextReading = 30; // Reset when it reaches 0
       }
 
       // Notify dashboard of countdown update
@@ -76,6 +88,13 @@ class MeterReadingService {
         }
       } else {
         LoggerConfig.logAppLifecycle('WARNING: Countdown callback is null!');
+      }
+
+      if (_secondsUntilNextReading <= 0) {
+        LoggerConfig.logAppLifecycle(
+          'Countdown reached zero - awaiting next interval',
+        );
+        timer.cancel();
       }
     });
 

@@ -29,8 +29,9 @@ public class BillingController : ControllerBase
             // Get all readings
             var readings = await _readingService.GetAll();
             
-            // TODO: Once Reading entity has ClientId/UserId, filter by user
-            // For now, use all readings for demonstration
+            var userReadings = readings
+            .Where(r => r.UserId == userId)
+            .ToList();
             var userReadings = readings.ToList();
 
             // Calculate billing
