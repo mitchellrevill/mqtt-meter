@@ -37,5 +37,14 @@ namespace Infrastructure.Mqtt.Repositories
             await _context.SaveChangesAsync();
             return reading;
         }
+
+        public async Task DeleteByUserIdAsync(string userId)
+        {
+            var toRemove = _context.Reading.Where(r => r.UserId == userId).ToList();
+            if (toRemove.Count == 0) return;
+
+            _context.Reading.RemoveRange(toRemove);
+            await _context.SaveChangesAsync();
+        }
     }
 }
