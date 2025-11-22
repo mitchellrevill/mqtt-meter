@@ -1,6 +1,10 @@
+using Application.Interfaces.Repositories;
 using Infrastructure.Mqtt.Configuration;
+using Infrastructure.Mqtt.DatabaseContext;
 using Infrastructure.Mqtt.Interfaces;
+using Infrastructure.Mqtt.Repositories;
 using Infrastructure.Mqtt.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -32,7 +36,19 @@ public static class ConfigureServices
 
         return services;
     }
+    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
+            {
+                services.AddDbContext<MqttDbContext>(options =>
+                {
+                    options.UseInMemoryDatabase("InMemory");
+                });
 
+                services.AddScoped<ISampleRepository, SampleRepository>();
+                services.AddScoped<IReadingRepository, ReadingRepository>();
+                services.AddScoped<IClientRepository, ClientRepository>();
+
+                return services;
+            }
     /// <summary>
     /// Add RabbitMQ MQTT services with custom configuration
     /// </summary>

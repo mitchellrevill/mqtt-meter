@@ -2,7 +2,6 @@ using Server.Hubs;
 using Server.Messaging;
 using Server.Services;
 using Application;
-using Infrastructure;
 using Infrastructure.Mqtt;
 
 var builder = WebApplication.CreateBuilder(args);

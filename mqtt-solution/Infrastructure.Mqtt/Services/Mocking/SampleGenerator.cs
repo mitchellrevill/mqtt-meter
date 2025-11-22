@@ -2,7 +2,7 @@ using System;
 using Bogus;
 using Domain.Entities.SampleEntities;
 
-namespace Infrastructure.Services.Mocking;
+namespace Infrastructure.Mqtt.Services.Mocking;
 
 public class SampleGenerator : Faker<Sample>
 {

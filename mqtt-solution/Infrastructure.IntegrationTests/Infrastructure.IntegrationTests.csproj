@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\Infrastructure.Mqtt\Infrastructure.Mqtt.csproj" />
   </ItemGroup>
 
   <ItemGroup>

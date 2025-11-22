@@ -1,6 +1,6 @@
 ﻿using Bogus;
 using Domain.Entities;
-using Infrastructure.DatabaseContext;
+using Infrastructure.Mqtt.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Infrastructure.Services.Mocking
+namespace Infrastructure.Mqtt.Services.Mocking
 {
     public class ClientGenerator : Faker<Client>
     {

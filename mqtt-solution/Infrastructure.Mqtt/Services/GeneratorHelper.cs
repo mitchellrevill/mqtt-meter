@@ -1,7 +1,7 @@
 ﻿using Domain.Entities;
 using Domain.Entities.SampleEntities;
-using Infrastructure.DatabaseContext;
-using Infrastructure.Services.Mocking;
+using Infrastructure.Mqtt.DatabaseContext;
+using Infrastructure.Mqtt.Services.Mocking;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Infrastructure.Services
+namespace Infrastructure.Mqtt.Services
 {
     public static class GeneratorHelper
     {

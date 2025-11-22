@@ -1,8 +1,8 @@
 ﻿using Application.Interfaces.Repositories;
 using Domain.Entities.SampleEntities;
-using Infrastructure.DatabaseContext;
-using Infrastructure.Services;
-using Infrastructure.Services.Mocking;
+using Infrastructure.Mqtt.DatabaseContext;
+using Infrastructure.Mqtt.Services;
+using Infrastructure.Mqtt.Services.Mocking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
-namespace Infrastructure.Repositories
+namespace Infrastructure.Mqtt.Repositories
 {
     public class SampleRepository : ISampleRepository
     {
