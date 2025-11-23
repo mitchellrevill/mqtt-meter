@@ -1,6 +1,8 @@
 ﻿using Application.Interfaces;
 using Application.Services.ReadingService.Query.GetAllReadings;
 using Application.Services.ReadingService.Command.CreateReading;
+using Application.Services.ReadingService.Command.ResetReadings;
+using Application.Services.ReadingService.Query.GetReadingsByUser;
 using Domain.Entities;
 using Domain.Entities.SampleEntities;
 using MediatR;
@@ -35,6 +37,11 @@ namespace Application.Services.ReadingService
         public async Task<Reading> CreateAsync(string userId, float value)
         {
             return await _sender.Send(new CreateReadingCommand(userId, value));
+        }
+
+        public async Task ResetForUserAsync(string userId)
+        {
+            await _sender.Send(new ResetReadingsCommand(userId));
         }
     }
 }

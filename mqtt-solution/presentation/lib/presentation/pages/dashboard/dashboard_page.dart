@@ -4,8 +4,8 @@ import '../../widgets/dashboard/total_bill_widget.dart';
 import '../../widgets/dashboard/next_reading_countdown_widget.dart';
 import '../../widgets/dashboard/bill_updates_list_widget.dart';
 import '../../../data/services/meter_reading_service.dart';
-import '../../../data/services/signalr_service.dart';
 import '../../../data/services/billing_service.dart';
+import '../../../data/services/mqtt_service.dart';
 import '../../../domain/entities/billing_model.dart';
 import '../../../core/utils/logger_mixin.dart';
 
@@ -27,11 +27,21 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
   BillingModel? currentBilling;
   double totalKwhUsed = 0.0;
   double ratePerKwh = 0.15;
+  double? _previousBillingTotalKwh;
+  double? _previousBillingTotalAmount;
+  DateTime? _previousBillingTimestamp;
+  int? _previousReadingCount;
 
   // Services
   final MeterReadingService _meterService = MeterReadingService();
-  final SignalRService _signalRService = SignalRService();
+  // SignalR removed - using MQTT only
   final BillingService _billingService = BillingService();
+  final _mqttService = MqttService();
+
+  // Keep references to listeners so we can remove them on dispose
+  Function(bool)? _connectionListener;
+  Function(Map<String, dynamic>)? _meterListener;
+  Function(BillingModel)? _billingListener;
 
   // Automatic user ID - no user input needed
   static const String _automaticUserId = 'user-001';
@@ -60,9 +70,8 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
       );
     }
 
-    // Automatically start meter readings and SignalR when the app launches
+    // Automatically start meter readings and MQTT when the app launches
     _startAutomaticMeterReadings();
-    _connectToSignalR();
     _startFetchingBilling();
 
     logInfo('Dashboard initialization complete');
@@ -71,8 +80,18 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
   @override
   void dispose() {
     _meterService.stopSendingReadings();
-    _signalRService.disconnect();
+
+    // Stop BillingService first (it may remove its own listener)
     _billingService.stopFetchingBilling();
+
+    // Remove listeners registered by this page
+    if (_connectionListener != null) _mqttService.removeConnectionListener(_connectionListener!);
+    if (_meterListener != null) _mqttService.removeMeterReadingListener(_meterListener!);
+    if (_billingListener != null) _mqttService.removeBillingListener(_billingListener!);
+
+    // Disconnect from MQTT broker
+    _mqttService.disconnect();
+
     super.dispose();
   }
 
@@ -90,60 +109,54 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
         });
       },
     );
+    // Connect to MQTT broker so the app can publish/subscribe directly
+    _connectToMqtt();
 
     logInfo('Automatically started meter readings for user: $_automaticUserId');
   }
 
-  void _connectToSignalR() async {
-    // Set up SignalR callbacks
-    _signalRService.onConnectionChanged = (connected) {
+  // SignalR removed — no longer supported in presentation app
+
+  void _connectToMqtt() async {
+    _connectionListener = (connected) {
       setState(() {
         isConnected = connected;
       });
-      logInfo('SignalR connection changed: $connected');
+      logInfo('MQTT connection changed: $connected');
     };
+    _mqttService.addConnectionListener(_connectionListener!);
 
-    _signalRService.onMeterReading = (reading) {
-      logInfo('Received meter reading via SignalR: $reading');
-      
-      // Update bill updates list
-      if (reading.containsKey('Value') && reading.containsKey('Timestamp')) {
-        final value = (reading['Value'] as num).toDouble();
+    _meterListener = (reading) {
+      logInfo('Received meter reading via MQTT: $reading');
+      // Keep the same behaviour as SignalR for meter reading events
+      if (reading.containsKey('value') && reading.containsKey('timestamp')) {
+        final value = (reading['value'] as num).toDouble();
         final amount = value * ratePerKwh;
-        
+
         setState(() {
           totalKwhUsed += value;
           totalBill = (totalBill ?? 0.0) + amount;
-          
-          billUpdates.insert(0, BillUpdate(
-            energyUsage: value,
-            amount: amount,
-            timestamp: DateTime.tryParse(reading['Timestamp'].toString()) ?? DateTime.now(),
-          ));
-          
-          // Keep only the last 20 updates
-          if (billUpdates.length > 20) {
-            billUpdates.removeLast();
-          }
         });
       }
     };
+    _mqttService.addMeterReadingListener(_meterListener!);
 
-    _signalRService.onBillingUpdate = (billing) {
+    _billingListener = (billing) {
       setState(() {
         currentBilling = billing;
         totalBill = billing.totalAmount;
         totalKwhUsed = billing.totalKwhUsed;
+        _maybeAddBillingHistoryEntry(billing);
       });
-      logInfo('Received billing update via SignalR: \$${billing.totalAmount.toStringAsFixed(2)}');
+      logInfo('Received billing update via MQTT: \$${billing.totalAmount.toStringAsFixed(2)}');
     };
+    _mqttService.addBillingListener(_billingListener!);
 
-    // Connect to SignalR
-    final connected = await _signalRService.connect(_automaticUserId);
+    final connected = await _mqttService.connect(_automaticUserId);
     if (connected) {
-      logInfo('Successfully connected to SignalR');
+      logInfo('Successfully connected to MQTT broker');
     } else {
-      logError('Failed to connect to SignalR', null, null);
+      logError('Failed to connect to MQTT broker', null, null);
     }
   }
 
@@ -155,10 +168,46 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
           currentBilling = billing;
           totalBill = billing.totalAmount;
           totalKwhUsed = billing.totalKwhUsed;
+          _maybeAddBillingHistoryEntry(billing);
         });
       },
     );
     logInfo('Started fetching billing data');
+  }
+
+  void _maybeAddBillingHistoryEntry(BillingModel billing) {
+    final alreadyRecorded =
+        (_previousBillingTimestamp != null && billing.lastUpdated.isAtSameMomentAs(_previousBillingTimestamp!)) ||
+        (_previousReadingCount != null && billing.readingCount == _previousReadingCount);
+
+    if (!alreadyRecorded) {
+      final prevKwh = _previousBillingTotalKwh ?? 0.0;
+      final prevAmount = _previousBillingTotalAmount ?? 0.0;
+
+      final deltaKwh = billing.totalKwhUsed - prevKwh;
+      final deltaAmount = billing.totalAmount - prevAmount;
+
+      final bool resetDetected =
+          billing.readingCount == 0 || deltaKwh <= 0 || deltaAmount <= 0;
+
+      final double entryKwh = resetDetected ? billing.totalKwhUsed : deltaKwh;
+      final double entryAmount = resetDetected ? billing.totalAmount : deltaAmount;
+
+      billUpdates.insert(0, BillUpdate(
+        energyUsage: entryKwh.abs(),
+        amount: entryAmount.abs(),
+        timestamp: billing.lastUpdated,
+      ));
+
+      if (billUpdates.length > 20) {
+        billUpdates.removeLast();
+      }
+    }
+
+    _previousBillingTotalKwh = billing.totalKwhUsed;
+    _previousBillingTotalAmount = billing.totalAmount;
+    _previousBillingTimestamp = billing.lastUpdated;
+    _previousReadingCount = billing.readingCount;
   }
 
   @override

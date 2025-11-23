@@ -1,6 +1,4 @@
-using Server.Hubs;
 using Server.Messaging;
-using Server.Services;
 using Application;
 using Infrastructure.Mqtt;
 
@@ -8,7 +6,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
-builder.Services.AddSignalR();
 builder.Services.AddHttpClient(); // Add HttpClient factory
 
 // Add Application layer services
@@ -20,11 +17,8 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 // Add MQTT services
 builder.Services.AddRabbitMqMqtt(builder.Configuration);
 
-// Add SignalR bridge
-builder.Services.AddSingleton<IMqttSignalRBridge, MqttSignalRBridge>();
-
-// Add MQTT to SignalR background service
-builder.Services.AddHostedService<MqttToSignalRService>();
+// Add MQTT reading processor background service
+builder.Services.AddHostedService<MqttReadingProcessorService>();
 
 // Add CORS policy
 builder.Services.AddCors(options =>
@@ -55,6 +49,5 @@ app.UseCors("AllowAll");
 
 app.UseRouting();
 app.MapControllers();
-app.MapHub<BillingHub>("/hub/billing");
 
 app.Run();

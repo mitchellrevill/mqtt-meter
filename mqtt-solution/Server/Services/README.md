@@ -1,1 +1,0 @@
-Contains business logic services such as the connection registry and bill calculator

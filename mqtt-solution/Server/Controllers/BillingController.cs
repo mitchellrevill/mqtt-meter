@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Application.Interfaces;
+using Infrastructure.Mqtt.Interfaces;
+using Infrastructure.Mqtt.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Server.Controllers;
 
@@ -9,13 +12,19 @@ public class BillingController : ControllerBase
 {
     private readonly ILogger<BillingController> _logger;
     private readonly IReadingService _readingService;
+    private readonly IMqttPublisher _mqttPublisher;
+    private readonly MqttTopicOptions _topicOptions;
 
     public BillingController(
         ILogger<BillingController> logger,
-        IReadingService readingService)
+        IReadingService readingService,
+        IMqttPublisher mqttPublisher,
+        IOptions<MqttTopicOptions> topicOptions)
     {
         _logger = logger;
         _readingService = readingService;
+        _mqttPublisher = mqttPublisher;
+        _topicOptions = topicOptions.Value;
     }
 
     /// <summary>
@@ -30,9 +39,8 @@ public class BillingController : ControllerBase
             var readings = await _readingService.GetAll();
             
             var userReadings = readings
-            .Where(r => r.UserId == userId)
-            .ToList();
-            var userReadings = readings.ToList();
+                .Where(r => r.UserId == userId)
+                .ToList();
 
             // Calculate billing
             const double ratePerKwh = 0.15;
@@ -52,6 +60,18 @@ public class BillingController : ControllerBase
 
             _logger.LogInformation("Retrieved billing for user {UserId}: {Amount:C}", userId, totalAmount);
 
+            // Publish billing update to MQTT
+            try
+            {
+                var billingTopic = _topicOptions.GetBillingUpdateTopic(userId);
+                await _mqttPublisher.PublishAsync(billingTopic, billing);
+                _logger.LogDebug("Published billing update to MQTT topic: {Topic}", billingTopic);
+            }
+            catch (Exception mqttEx)
+            {
+                _logger.LogWarning(mqttEx, "Failed to publish billing update to MQTT for user {UserId}", userId);
+            }
+
             return Ok(billing);
         }
         catch (Exception ex)
@@ -69,16 +89,48 @@ public class BillingController : ControllerBase
     {
         try
         {
-            // In a real implementation, this would delete or archive readings
-            // For now, we'll just return success
             _logger.LogInformation("Billing reset requested for user {UserId}", userId);
 
-            return Ok(new
+            var response = new
             {
                 Success = true,
                 Message = $"Billing reset for user {userId}",
                 Timestamp = DateTime.UtcNow
-            });
+            };
+
+            // Perform reset in the application data store
+            try
+            {
+                await _readingService.ResetForUserAsync(userId);
+                _logger.LogInformation("Cleared readings for user {UserId} as part of reset", userId);
+            }
+            catch (Exception resetEx)
+            {
+                _logger.LogWarning(resetEx, "Failed to reset stored readings for user {UserId}", userId);
+            }
+
+            // Publish reset notification to MQTT
+            try
+            {
+                var billingTopic = _topicOptions.GetBillingUpdateTopic(userId);
+                await _mqttPublisher.PublishAsync(billingTopic, new
+                {
+                    UserId = userId,
+                    Type = "Reset",
+                    TotalKwhUsed = 0.0,
+                    TotalAmount = 0.0,
+                    RatePerKwh = 0.15,
+                    ReadingCount = 0,
+                    LastUpdated = DateTime.UtcNow
+                });
+                _logger.LogDebug("Published billing reset to MQTT topic: {Topic}", billingTopic);
+            }
+            catch (Exception mqttEx)
+            {
+                _logger.LogWarning(mqttEx, "Failed to publish billing reset to MQTT for user {UserId}", userId);
+            }
+
+            return Ok(response);
         }
         catch (Exception ex)
         {

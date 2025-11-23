@@ -2,6 +2,7 @@
 using Infrastructure.Mqtt.Services;
 using Domain.Entities;
 using FluentAssertions;
+using Infrastructure.Mqtt.IntegrationTests.Data;
 
 namespace Infrastructure.IntegrationTests.Data.ReadingTests
 {

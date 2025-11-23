@@ -6,6 +6,7 @@ class BillingModel {
   final double ratePerKwh;
   final double totalAmount;
   final DateTime lastUpdated;
+  final int readingCount;
 
   const BillingModel({
     required this.userId,
@@ -15,24 +16,36 @@ class BillingModel {
     required this.ratePerKwh,
     required this.totalAmount,
     required this.lastUpdated,
+    required this.readingCount,
   });
 
   /// Factory constructor to create BillingModel from JSON response
   factory BillingModel.fromJson(Map<String, dynamic> json) {
+    final dynamic billingPeriodStartRaw = json['billingPeriodStart'] ?? json['BillingPeriodStart'];
+    final dynamic billingPeriodEndRaw = json['billingPeriodEnd'] ?? json['BillingPeriodEnd'];
+    final dynamic lastUpdatedRaw = json['lastUpdated'] ?? json['LastUpdated'];
+
     return BillingModel(
-      userId: json['userId'] as String? ?? 'unknown',
-      billingPeriodStart: json['billingPeriodStart'] != null 
-          ? DateTime.parse(json['billingPeriodStart'] as String)
-          : DateTime.now().subtract(const Duration(days: 30)),
-      billingPeriodEnd: json['billingPeriodEnd'] != null
-          ? DateTime.parse(json['billingPeriodEnd'] as String)
-          : DateTime.now(),
-      totalKwhUsed: (json['totalKwhUsed'] as num?)?.toDouble() ?? 0.0,
-      ratePerKwh: (json['ratePerKwh'] as num?)?.toDouble() ?? 0.15,
-      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
-      lastUpdated: json['lastUpdated'] != null
-          ? DateTime.parse(json['lastUpdated'] as String)
-          : DateTime.now(),
+      userId: json['userId'] as String? ?? json['UserId'] as String? ?? 'unknown',
+      billingPeriodStart: billingPeriodStartRaw != null
+        ? DateTime.parse(billingPeriodStartRaw as String)
+        : DateTime.now().subtract(const Duration(days: 30)),
+      billingPeriodEnd: billingPeriodEndRaw != null
+        ? DateTime.parse(billingPeriodEndRaw as String)
+        : DateTime.now(),
+      totalKwhUsed: (json['totalKwhUsed'] as num?)?.toDouble() ??
+        (json['TotalKwhUsed'] as num?)?.toDouble() ??
+        0.0,
+      ratePerKwh: (json['ratePerKwh'] as num?)?.toDouble() ??
+        (json['RatePerKwh'] as num?)?.toDouble() ??
+        0.15,
+      totalAmount: (json['totalAmount'] as num?)?.toDouble() ??
+        (json['TotalAmount'] as num?)?.toDouble() ??
+        0.0,
+      lastUpdated: lastUpdatedRaw != null
+        ? DateTime.parse(lastUpdatedRaw as String)
+        : DateTime.now(),
+      readingCount: json['readingCount'] as int? ?? json['ReadingCount'] as int? ?? 0,
     );
   }
 
@@ -46,6 +59,7 @@ class BillingModel {
       'ratePerKwh': ratePerKwh,
       'totalAmount': totalAmount,
       'lastUpdated': lastUpdated.toIso8601String(),
+      'readingCount': readingCount,
     };
   }
 
@@ -58,6 +72,7 @@ class BillingModel {
     double? ratePerKwh,
     double? totalAmount,
     DateTime? lastUpdated,
+    int? readingCount,
   }) {
     return BillingModel(
       userId: userId ?? this.userId,
@@ -67,6 +82,7 @@ class BillingModel {
       ratePerKwh: ratePerKwh ?? this.ratePerKwh,
       totalAmount: totalAmount ?? this.totalAmount,
       lastUpdated: lastUpdated ?? this.lastUpdated,
+      readingCount: readingCount ?? this.readingCount,
     );
   }
 
@@ -85,7 +101,8 @@ class BillingModel {
         other.totalKwhUsed == totalKwhUsed &&
         other.ratePerKwh == ratePerKwh &&
         other.totalAmount == totalAmount &&
-        other.lastUpdated == lastUpdated;
+        other.lastUpdated == lastUpdated &&
+        other.readingCount == readingCount;
   }
 
   @override
@@ -97,5 +114,6 @@ class BillingModel {
     ratePerKwh,
     totalAmount,
     lastUpdated,
+    readingCount,
   );
 }
