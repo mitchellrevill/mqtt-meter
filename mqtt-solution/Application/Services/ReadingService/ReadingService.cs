@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.Services.ReadingService.Command.InsertBatchReadings;
 
 namespace Application.Services.ReadingService
 {
@@ -42,6 +43,11 @@ namespace Application.Services.ReadingService
         public async Task ResetForUserAsync(string userId)
         {
             await _sender.Send(new ResetReadingsCommand(userId));
+        }
+
+        public async Task InsertBatchAsync(string userId, List<Reading> readings)
+        {
+            await _sender.Send(new InsertBatchReadingsCommand(userId, readings));
         }
     }
 }

@@ -4,6 +4,11 @@ using Microsoft.Extensions.Options;
 using System.Text.Json;
 using Application.Interfaces;
 using System.Linq;
+using Infrastructure.Mqtt.DatabaseContext;
+using Infrastructure.Mqtt.Services.Mocking;
+using Domain.Entities;
+using Infrastructure.Mqtt.Services;
+using Bogus;
 
 namespace Server.Messaging;
 
@@ -55,6 +60,12 @@ public class MqttReadingProcessorService : BackgroundService
                     if (reading != null)
                     {
                         var userId = TryGetString(reading, "ClientId") ?? TryGetString(reading, "clientId") ?? TryGetString(reading, "userId");
+                        
+                        if (!string.IsNullOrEmpty(userId))
+                        {
+                            await SeedAsync(userId);
+                        }
+
                         var value = TryGetDouble(reading, "Value") ?? TryGetDouble(reading, "value");
                         
                         if (!string.IsNullOrEmpty(userId) && value.HasValue)
@@ -154,6 +165,31 @@ public class MqttReadingProcessorService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in MQTT Reading Processor Service");
+        }
+    }
+
+    public async Task SeedAsync(string userId)
+    {
+        try
+        {
+            Random random = new Random();
+            int randomNumber = random.Next(0, 20);
+
+            for(int i = 0; i < randomNumber; i++)
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var readingService = scope.ServiceProvider.GetRequiredService<IReadingService>();
+                    var fakeReadings = new ReadingGenerator(userId).GenerateBetween(2, 20);
+                    await readingService.InsertBatchAsync(userId, fakeReadings);
+
+                    await PublishBillingSnapshotAsync(readingService, userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error seeding billing for user {UserId}", userId);
         }
     }
 
