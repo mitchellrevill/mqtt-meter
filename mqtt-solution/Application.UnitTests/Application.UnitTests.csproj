@@ -36,6 +36,8 @@
 
   <ItemGroup>
     <Folder Include="ClientTests\" />
+    <Folder Include="ClientTests\Commands\" />
+    <Folder Include="ClientTests\Queries\" />
     <Folder Include="ReadingTests\Commands\" />
   </ItemGroup>
 
