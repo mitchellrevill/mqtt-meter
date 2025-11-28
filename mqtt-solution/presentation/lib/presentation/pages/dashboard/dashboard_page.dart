@@ -85,9 +85,12 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
     _billingService.stopFetchingBilling();
 
     // Remove listeners registered by this page
-    if (_connectionListener != null) _mqttService.removeConnectionListener(_connectionListener!);
-    if (_meterListener != null) _mqttService.removeMeterReadingListener(_meterListener!);
-    if (_billingListener != null) _mqttService.removeBillingListener(_billingListener!);
+    if (_connectionListener != null)
+      _mqttService.removeConnectionListener(_connectionListener!);
+    if (_meterListener != null)
+      _mqttService.removeMeterReadingListener(_meterListener!);
+    if (_billingListener != null)
+      _mqttService.removeBillingListener(_billingListener!);
 
     // Disconnect from MQTT broker
     _mqttService.disconnect();
@@ -100,16 +103,7 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
       isConnected = true;
     });
 
-    // Start meter readings with countdown callback
-    _meterService.startSendingReadings(
-      _automaticUserId,
-      onCountdownUpdate: (seconds) {
-        setState(() {
-          timeUntilNextReading = Duration(seconds: seconds);
-        });
-      },
-    );
-    // Connect to MQTT broker so the app can publish/subscribe directly
+    // Connect to MQTT broker first, then start sending readings
     _connectToMqtt();
 
     logInfo('Automatically started meter readings for user: $_automaticUserId');
@@ -148,13 +142,24 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
         totalKwhUsed = billing.totalKwhUsed;
         _maybeAddBillingHistoryEntry(billing);
       });
-      logInfo('Received billing update via MQTT: \$${billing.totalAmount.toStringAsFixed(2)}');
+      logInfo(
+          'Received billing update via MQTT: \$${billing.totalAmount.toStringAsFixed(2)}');
     };
     _mqttService.addBillingListener(_billingListener!);
 
     final connected = await _mqttService.connect(_automaticUserId);
     if (connected) {
       logInfo('Successfully connected to MQTT broker');
+
+      // Start meter readings with countdown callback after successful connection
+      _meterService.startSendingReadings(
+        _automaticUserId,
+        onCountdownUpdate: (seconds) {
+          setState(() {
+            timeUntilNextReading = Duration(seconds: seconds);
+          });
+        },
+      );
     } else {
       logError('Failed to connect to MQTT broker', null, null);
     }
@@ -176,9 +181,10 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
   }
 
   void _maybeAddBillingHistoryEntry(BillingModel billing) {
-    final alreadyRecorded =
-        (_previousBillingTimestamp != null && billing.lastUpdated.isAtSameMomentAs(_previousBillingTimestamp!)) ||
-        (_previousReadingCount != null && billing.readingCount == _previousReadingCount);
+    final alreadyRecorded = (_previousBillingTimestamp != null &&
+            billing.lastUpdated.isAtSameMomentAs(_previousBillingTimestamp!)) ||
+        (_previousReadingCount != null &&
+            billing.readingCount == _previousReadingCount);
 
     if (!alreadyRecorded) {
       final prevKwh = _previousBillingTotalKwh ?? 0.0;
@@ -191,13 +197,16 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
           billing.readingCount == 0 || deltaKwh <= 0 || deltaAmount <= 0;
 
       final double entryKwh = resetDetected ? billing.totalKwhUsed : deltaKwh;
-      final double entryAmount = resetDetected ? billing.totalAmount : deltaAmount;
+      final double entryAmount =
+          resetDetected ? billing.totalAmount : deltaAmount;
 
-      billUpdates.insert(0, BillUpdate(
-        energyUsage: entryKwh.abs(),
-        amount: entryAmount.abs(),
-        timestamp: billing.lastUpdated,
-      ));
+      billUpdates.insert(
+          0,
+          BillUpdate(
+            energyUsage: entryKwh.abs(),
+            amount: entryAmount.abs(),
+            timestamp: billing.lastUpdated,
+          ));
 
       if (billUpdates.length > 20) {
         billUpdates.removeLast();

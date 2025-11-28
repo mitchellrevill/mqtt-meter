@@ -22,6 +22,7 @@ public class MqttReadingProcessorService : BackgroundService
     private readonly IMqttPublisher _mqttPublisher;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly MqttTopicOptions _topicOptions;
+    private readonly HashSet<string> _seededUsers = new();
 
     public MqttReadingProcessorService(
         ILogger<MqttReadingProcessorService> logger,
@@ -61,9 +62,10 @@ public class MqttReadingProcessorService : BackgroundService
                     {
                         var userId = TryGetString(reading, "ClientId") ?? TryGetString(reading, "clientId") ?? TryGetString(reading, "userId");
                         
-                        if (!string.IsNullOrEmpty(userId))
+                        if (!string.IsNullOrEmpty(userId) && !_seededUsers.Contains(userId))
                         {
                             await SeedAsync(userId);
+                            _seededUsers.Add(userId);
                         }
 
                         var value = TryGetDouble(reading, "Value") ?? TryGetDouble(reading, "value");
