@@ -47,7 +47,7 @@ namespace Application.Services.ReadingService
 
         public async Task InsertBatchAsync(string userId, List<Reading> readings)
         {
-            await _sender.Send(new InsertBatchReadingsCommand(userId, readings));
+            await _sender.Send(new InsertBatchReadingsCommand(readings));
         }
     }
 }
