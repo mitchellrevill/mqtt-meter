@@ -155,7 +155,7 @@ public class BillingController : ControllerBase
     {
         try
         {
-            var readings = await _readingService.GetAll();
+            var readings = await _readingService.GetByUserId(userId);
             
             // TODO: Filter by userId once Reading entity has ClientId/UserId
             var userReadings = readings
