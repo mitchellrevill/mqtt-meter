@@ -8,7 +8,7 @@ class MeterReadingService {
   static const int _minIntervalSeconds = 15;
   static const int _maxIntervalSeconds = 45;
   final Random _rng = Random();
-  
+
   Timer? _readingTimer;
   String? _currentUserId;
   double _currentReading = 0.0;
@@ -23,8 +23,9 @@ class MeterReadingService {
   factory MeterReadingService() => _instance;
   MeterReadingService._internal();
 
-   // Start sending readings between min and max intervals
-  void startSendingReadings(String userId, {Function(int)? onCountdownUpdate}) {
+  // Start sending readings between min and max intervals
+  void startSendingReadings(String userId,
+      {Function(int)? onCountdownUpdate}) async {
     _currentUserId = userId;
     _onCountdownUpdate = onCountdownUpdate;
     LoggerConfig.logAppLifecycle('Starting to send readings for user: $userId');
@@ -32,9 +33,10 @@ class MeterReadingService {
       'Countdown callback registered: ${_onCountdownUpdate != null}',
     );
 
-    // Send initial reading
-    _sendReading();
+    // Send initial reading immediately
+    await _sendReading();
 
+    // Then schedule subsequent readings at intervals
     _scheduleNextReading();
   }
 
@@ -131,8 +133,8 @@ class MeterReadingService {
         await MqttService().connect(readingRequest.userId);
       }
 
-      await MqttService().publishReading(readingRequest.userId, readingRequest.value);
-      
+      await MqttService()
+          .publishReading(readingRequest.userId, readingRequest.value);
     } catch (e) {
       LoggerConfig.logAppLifecycle('Error sending reading: $e');
     }

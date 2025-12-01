@@ -4,11 +4,16 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import '../../config/logger_config.dart';
 import '../../domain/entities/billing_model.dart';
+import '../../domain/entities/grid_alert_model.dart';
 
-const String _defaultMqttHost = String.fromEnvironment('MQTT_HOST', defaultValue: 'localhost');
-const int _defaultMqttPort = int.fromEnvironment('MQTT_PORT', defaultValue: 1883);
-const String? _defaultMqttUsername = String.fromEnvironment('MQTT_USERNAME', defaultValue: 'admin');
-const String? _defaultMqttPassword = String.fromEnvironment('MQTT_PASSWORD', defaultValue: 'admin');
+const String _defaultMqttHost =
+    String.fromEnvironment('MQTT_HOST', defaultValue: 'localhost');
+const int _defaultMqttPort =
+    int.fromEnvironment('MQTT_PORT', defaultValue: 1883);
+const String _defaultMqttUsername =
+    String.fromEnvironment('MQTT_USERNAME', defaultValue: 'admin');
+const String _defaultMqttPassword =
+    String.fromEnvironment('MQTT_PASSWORD', defaultValue: 'admin');
 
 ///  MQTT client service for the presentation app.
 /// - Connects to an MQTT broker (default: localhost:1883)
@@ -28,6 +33,7 @@ class MqttService {
   final List<Function(Map<String, dynamic>)> _meterReadingListeners = [];
   final List<Function(BillingModel)> _billingListeners = [];
   final List<Function(bool)> _connectionListeners = [];
+  final List<Function(GridAlertModel)> _alertListeners = [];
 
   /// Register a listener for meter reading messages (payload -> Map)
   void addMeterReadingListener(Function(Map<String, dynamic>) listener) {
@@ -47,6 +53,16 @@ class MqttService {
   /// Unregister a billing listener
   void removeBillingListener(Function(BillingModel) listener) {
     _billingListeners.remove(listener);
+  }
+
+  /// Register a listener for grid alerts
+  void addAlertListener(Function(GridAlertModel) listener) {
+    _alertListeners.add(listener);
+  }
+
+  /// Unregister an alert listener
+  void removeAlertListener(Function(GridAlertModel) listener) {
+    _alertListeners.remove(listener);
   }
 
   /// Register a connection state listener
@@ -70,10 +86,13 @@ class MqttService {
     try {
       if (_connected) return true;
 
-      final effectiveUsername = (username != null && username.isNotEmpty) ? username : null;
-      final effectivePassword = (password != null && password.isNotEmpty) ? password : null;
+      final effectiveUsername =
+          (username != null && username.isNotEmpty) ? username : null;
+      final effectivePassword =
+          (password != null && password.isNotEmpty) ? password : null;
       final maskedUser = effectiveUsername ?? 'anonymous';
-      LoggerConfig.logAppLifecycle('MqttService: connecting to $host:$port as $maskedUser');
+      LoggerConfig.logAppLifecycle(
+          'MqttService: connecting to $host:$port as $maskedUser');
 
       _clientId = 'flutter-${DateTime.now().millisecondsSinceEpoch}';
 
@@ -83,7 +102,8 @@ class MqttService {
       client.keepAlivePeriod = 20;
       client.onConnected = _onConnected;
       client.onDisconnected = _onDisconnected;
-      client.onSubscribed = (topic) => LoggerConfig.logAppLifecycle('Subscribed to $topic');
+      client.onSubscribed =
+          (topic) => LoggerConfig.logAppLifecycle('Subscribed to $topic');
 
       // Use a simple connection message
       final connMess = MqttConnectMessage()
@@ -94,7 +114,8 @@ class MqttService {
       if (effectiveUsername != null && effectivePassword != null) {
         connMess.authenticateAs(effectiveUsername, effectivePassword);
       } else {
-        LoggerConfig.logAppLifecycle('MqttService: no credentials supplied, broker may reject connection');
+        LoggerConfig.logAppLifecycle(
+            'MqttService: no credentials supplied, broker may reject connection');
       }
 
       client.connectionMessage = connMess;
@@ -109,16 +130,19 @@ class MqttService {
           try {
             l(true);
           } catch (e) {
-            LoggerConfig.logAppLifecycle('MqttService: connection listener error: $e');
+            LoggerConfig.logAppLifecycle(
+                'MqttService: connection listener error: $e');
           }
         }
 
-        // Subscribe to the user topics for readings and billing
+        // Subscribe to the user topics for readings, billing, and alerts
         final readingTopic = 'meters/readings/$userId';
         final billingTopic = 'meters/billing/$userId';
+        final alertTopic = 'alerts/grid';
 
         client.subscribe(readingTopic, MqttQos.atLeastOnce);
         client.subscribe(billingTopic, MqttQos.atLeastOnce);
+        client.subscribe(alertTopic, MqttQos.atLeastOnce);
 
         // Listen for messages
         client.updates?.listen(_onMessage);
@@ -127,13 +151,15 @@ class MqttService {
         return true;
       }
 
-      LoggerConfig.logAppLifecycle('MqttService: failed to connect, status: ${client.connectionStatus}');
+      LoggerConfig.logAppLifecycle(
+          'MqttService: failed to connect, status: ${client.connectionStatus}');
       _connected = false;
       for (final l in _connectionListeners) {
         try {
           l(false);
         } catch (e) {
-          LoggerConfig.logAppLifecycle('MqttService: connection listener error: $e');
+          LoggerConfig.logAppLifecycle(
+              'MqttService: connection listener error: $e');
         }
       }
       return false;
@@ -144,7 +170,8 @@ class MqttService {
         try {
           l(false);
         } catch (e) {
-          LoggerConfig.logAppLifecycle('MqttService: connection listener error: $e');
+          LoggerConfig.logAppLifecycle(
+              'MqttService: connection listener error: $e');
         }
       }
       return false;
@@ -160,7 +187,8 @@ class MqttService {
         try {
           l(false);
         } catch (e) {
-          LoggerConfig.logAppLifecycle('MqttService: connection listener error: $e');
+          LoggerConfig.logAppLifecycle(
+              'MqttService: connection listener error: $e');
         }
       }
     } catch (e) {
@@ -172,12 +200,17 @@ class MqttService {
 
   Future<void> publishReading(String userId, double value) async {
     if (!isConnected || _client == null) {
-      LoggerConfig.logAppLifecycle('MqttService: not connected — cannot publish reading');
+      LoggerConfig.logAppLifecycle(
+          'MqttService: not connected — cannot publish reading');
       return;
     }
 
     final topic = 'meters/readings/$userId';
-    final payload = json.encode({'userId': userId, 'value': value, 'timestamp': DateTime.now().toIso8601String()});
+    final payload = json.encode({
+      'userId': userId,
+      'value': value,
+      'timestamp': DateTime.now().toIso8601String()
+    });
 
     final builder = MqttClientPayloadBuilder();
     builder.addString(payload);
@@ -193,21 +226,28 @@ class MqttService {
   /// Publish a billing reset command for the given userId
   Future<void> publishBillingReset(String userId) async {
     if (!isConnected || _client == null) {
-      LoggerConfig.logAppLifecycle('MqttService: not connected — cannot publish billing reset');
+      LoggerConfig.logAppLifecycle(
+          'MqttService: not connected — cannot publish billing reset');
       return;
     }
 
     final topic = 'meters/billing/$userId/reset';
-    final payload = json.encode({'userId': userId, 'command': 'reset', 'timestamp': DateTime.now().toIso8601String()});
+    final payload = json.encode({
+      'userId': userId,
+      'command': 'reset',
+      'timestamp': DateTime.now().toIso8601String()
+    });
 
     final builder = MqttClientPayloadBuilder();
     builder.addString(payload);
 
     try {
       _client!.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
-      LoggerConfig.logAppLifecycle('MqttService: published billing reset to $topic');
+      LoggerConfig.logAppLifecycle(
+          'MqttService: published billing reset to $topic');
     } catch (e) {
-      LoggerConfig.logAppLifecycle('MqttService: error publishing billing reset: $e');
+      LoggerConfig.logAppLifecycle(
+          'MqttService: error publishing billing reset: $e');
     }
   }
 
@@ -217,34 +257,49 @@ class MqttService {
 
       for (final event in events) {
         final recMess = event.payload as MqttPublishMessage;
-        final payload = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+        final payload =
+            MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
         final topic = event.topic;
 
-        LoggerConfig.logAppLifecycle('MqttService: message on topic $topic -> $payload');
+        LoggerConfig.logAppLifecycle(
+            'MqttService: message on topic $topic -> $payload');
 
         try {
           final data = json.decode(payload) as Map<String, dynamic>;
 
-            if (topic.startsWith('meters/readings')) {
-              for (final l in _meterReadingListeners) {
-                try {
-                  l(data);
-                } catch (e) {
-                  LoggerConfig.logAppLifecycle('MqttService: meter listener error: $e');
-                }
+          if (topic.startsWith('meters/readings')) {
+            for (final l in _meterReadingListeners) {
+              try {
+                l(data);
+              } catch (e) {
+                LoggerConfig.logAppLifecycle(
+                    'MqttService: meter listener error: $e');
               }
+            }
           } else if (topic.startsWith('meters/billing')) {
             final billing = BillingModel.fromJson(data);
-              for (final l in _billingListeners) {
-                try {
-                  l(billing);
-                } catch (e) {
-                  LoggerConfig.logAppLifecycle('MqttService: billing listener error: $e');
-                }
+            for (final l in _billingListeners) {
+              try {
+                l(billing);
+              } catch (e) {
+                LoggerConfig.logAppLifecycle(
+                    'MqttService: billing listener error: $e');
               }
+            }
+          } else if (topic.startsWith('alerts/grid')) {
+            final alert = GridAlertModel.fromJson(data);
+            for (final l in _alertListeners) {
+              try {
+                l(alert);
+              } catch (e) {
+                LoggerConfig.logAppLifecycle(
+                    'MqttService: alert listener error: $e');
+              }
+            }
           }
         } catch (e) {
-          LoggerConfig.logAppLifecycle('MqttService: error parsing message payload: $e');
+          LoggerConfig.logAppLifecycle(
+              'MqttService: error parsing message payload: $e');
         }
       }
     } catch (e) {
@@ -259,7 +314,8 @@ class MqttService {
       try {
         l(true);
       } catch (e) {
-        LoggerConfig.logAppLifecycle('MqttService: connection listener error: $e');
+        LoggerConfig.logAppLifecycle(
+            'MqttService: connection listener error: $e');
       }
     }
   }
@@ -271,7 +327,8 @@ class MqttService {
       try {
         l(false);
       } catch (e) {
-        LoggerConfig.logAppLifecycle('MqttService: connection listener error: $e');
+        LoggerConfig.logAppLifecycle(
+            'MqttService: connection listener error: $e');
       }
     }
   }

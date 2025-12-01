@@ -15,6 +15,7 @@ namespace Application.Interfaces.Repositories
         Task<IEnumerable<Reading>> GetByUserId(string userId);
         // Delete all readings for a given user
         Task DeleteByUserIdAsync(string userId);
+        Task InsertBatchAsync(List<Reading> readings);
 
     }
 }

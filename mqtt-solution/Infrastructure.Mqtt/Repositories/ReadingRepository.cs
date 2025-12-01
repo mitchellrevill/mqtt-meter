@@ -46,5 +46,11 @@ namespace Infrastructure.Mqtt.Repositories
             _context.Reading.RemoveRange(toRemove);
             await _context.SaveChangesAsync();
         }
+
+        public async Task InsertBatchAsync(List<Reading> readings)
+        {
+            readings.ForEach(async reading => {await _context.Reading.AddAsync(reading);});
+            await _context.SaveChangesAsync();
+        }
     }
 }

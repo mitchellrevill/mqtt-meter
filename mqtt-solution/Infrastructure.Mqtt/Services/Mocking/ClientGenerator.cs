@@ -18,7 +18,7 @@ namespace Infrastructure.Mqtt.Services.Mocking
         {
             _context = context;
 
-            RuleFor(client => client.Readings, () =>
+            RuleFor(client => client.Readings, (c) =>
             {
                 var fakeReadings = new ReadingGenerator().GenerateBetween(2, 20);
                 GeneratorHelper.AddEntities<Reading>(fakeReadings, _context);
