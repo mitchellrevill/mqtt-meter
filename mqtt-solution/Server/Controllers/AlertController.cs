@@ -7,7 +7,8 @@ namespace Server.Controllers;
 
 /// <summary>
 /// Controller for managing grid alerts
-/// TODO: This is a placeholder for future implementation of grid alert monitoring
+/// Supports both automatic alert generation (via GridAlertGeneratorService) 
+/// and manual alert publishing for testing
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -82,15 +83,14 @@ public class AlertController : ControllerBase
 
     /// <summary>
     /// Get alert configuration status
-    /// TODO: Implement real grid monitoring integration
     /// </summary>
     [HttpGet("status")]
     public IActionResult GetAlertStatus()
     {
         return Ok(new
         {
-            enabled = false,
-            message = "Alert monitoring not yet implemented.",
+            enabled = true,
+            message = "Grid alert generator is active. Random alerts are being published every 30-90 seconds.",
             mqttConnected = _mqttPublisher.IsConnected,
             timestamp = DateTime.UtcNow
         });

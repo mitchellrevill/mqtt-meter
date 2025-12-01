@@ -196,9 +196,9 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
       showOverlay: (alert) {
         _showAlertOverlay(alert);
       },
-      enableMockAlerts: true,
+      enableMockAlerts: false, // Disabled - using backend alerts
     );
-    logInfo('Started alert service with mock alerts enabled');
+    logInfo('Started alert service - listening for backend alerts');
   }
 
   void _showAlertOverlay(alert) {
