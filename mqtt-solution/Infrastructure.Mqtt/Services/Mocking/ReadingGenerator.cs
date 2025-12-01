@@ -12,4 +12,12 @@ public class ReadingGenerator : Faker<Reading>
         RuleFor(reading => reading.TimeStamp, timeStamp => timeStamp.Date.Between(DateTime.Now.AddDays(-2), DateTime.Now.AddHours(-12)));
         RuleFor(reading => reading.Value, value => value.Random.Float(0, 10));
     }
+
+    public ReadingGenerator(string userId)
+    {
+        // Generate date between last 2 days to the last 12 hours
+        RuleFor(reading => reading.TimeStamp, timeStamp => timeStamp.Date.Between(DateTime.Now.AddDays(-2), DateTime.Now.AddHours(-12)));
+        RuleFor(reading => reading.Value, value => value.Random.Float(0, 10));
+        RuleFor(reading => reading.UserId, value => userId);
+    }
 }
