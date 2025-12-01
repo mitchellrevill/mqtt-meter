@@ -112,16 +112,7 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
       isConnected = true;
     });
 
-    // Start meter readings with countdown callback
-    _meterService.startSendingReadings(
-      _automaticUserId,
-      onCountdownUpdate: (seconds) {
-        setState(() {
-          timeUntilNextReading = Duration(seconds: seconds);
-        });
-      },
-    );
-    // Connect to MQTT broker so the app can publish/subscribe directly
+    // Connect to MQTT broker first, then start sending readings
     _connectToMqtt();
 
     logInfo('Automatically started meter readings for user: $_automaticUserId');
@@ -168,6 +159,16 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
     final connected = await _mqttService.connect(_automaticUserId);
     if (connected) {
       logInfo('Successfully connected to MQTT broker');
+
+      // Start meter readings with countdown callback after successful connection
+      _meterService.startSendingReadings(
+        _automaticUserId,
+        onCountdownUpdate: (seconds) {
+          setState(() {
+            timeUntilNextReading = Duration(seconds: seconds);
+          });
+        },
+      );
     } else {
       logError('Failed to connect to MQTT broker', null, null);
     }
