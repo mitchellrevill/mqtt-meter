@@ -20,6 +20,9 @@ builder.Services.AddRabbitMqMqtt(builder.Configuration);
 // Add MQTT reading processor background service
 builder.Services.AddHostedService<MqttReadingProcessorService>();
 
+// Add grid alert generator background service
+builder.Services.AddHostedService<GridAlertGeneratorService>();
+
 // Add CORS policy
 builder.Services.AddCors(options =>
 {
