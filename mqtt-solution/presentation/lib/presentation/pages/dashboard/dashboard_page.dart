@@ -6,6 +6,7 @@ import '../../widgets/dashboard/bill_updates_list_widget.dart';
 import '../../../data/services/meter_reading_service.dart';
 import '../../../data/services/billing_service.dart';
 import '../../../data/services/mqtt_service.dart';
+import '../../../data/services/alert_service.dart';
 import '../../../domain/entities/billing_model.dart';
 import '../../../core/utils/logger_mixin.dart';
 
@@ -37,6 +38,7 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
   // SignalR removed - using MQTT only
   final BillingService _billingService = BillingService();
   final _mqttService = MqttService();
+  final AlertService _alertService = AlertService();
 
   // Keep references to listeners so we can remove them on dispose
   Function(bool)? _connectionListener;
@@ -73,6 +75,7 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
     // Automatically start meter readings and MQTT when the app launches
     _startAutomaticMeterReadings();
     _startFetchingBilling();
+    _startAlertService();
 
     logInfo('Dashboard initialization complete');
   }
@@ -84,10 +87,19 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
     // Stop BillingService first (it may remove its own listener)
     _billingService.stopFetchingBilling();
 
+    // Stop AlertService
+    _alertService.stopListeningForAlerts();
+
     // Remove listeners registered by this page
-    if (_connectionListener != null) _mqttService.removeConnectionListener(_connectionListener!);
-    if (_meterListener != null) _mqttService.removeMeterReadingListener(_meterListener!);
-    if (_billingListener != null) _mqttService.removeBillingListener(_billingListener!);
+    if (_connectionListener != null) {
+      _mqttService.removeConnectionListener(_connectionListener!);
+    }
+    if (_meterListener != null) {
+      _mqttService.removeMeterReadingListener(_meterListener!);
+    }
+    if (_billingListener != null) {
+      _mqttService.removeBillingListener(_billingListener!);
+    }
 
     // Disconnect from MQTT broker
     _mqttService.disconnect();
@@ -148,7 +160,8 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
         totalKwhUsed = billing.totalKwhUsed;
         _maybeAddBillingHistoryEntry(billing);
       });
-      logInfo('Received billing update via MQTT: \$${billing.totalAmount.toStringAsFixed(2)}');
+      logInfo(
+          'Received billing update via MQTT: \$${billing.totalAmount.toStringAsFixed(2)}');
     };
     _mqttService.addBillingListener(_billingListener!);
 
@@ -175,10 +188,101 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
     logInfo('Started fetching billing data');
   }
 
+  void _startAlertService() {
+    _alertService.startListeningForAlerts(
+      onAlertReceived: (alert) {
+        logInfo('Received grid alert: ${alert.message}');
+      },
+      showOverlay: (alert) {
+        _showAlertOverlay(alert);
+      },
+      enableMockAlerts: true,
+    );
+    logInfo('Started alert service with mock alerts enabled');
+  }
+
+  void _showAlertOverlay(alert) {
+    // Use OverlayEntry to show a custom notification on desktop
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 20,
+        right: 20,
+        child: Material(
+          elevation: 10,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AlertService.getColorForSeverity(alert.severity),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  AlertService.getIconForSeverity(alert.severity),
+                  style: const TextStyle(fontSize: 24),
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        alert.message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (alert.affectedArea != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          alert.affectedArea!,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => overlayEntry.remove(),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+
+    // Auto-dismiss after 5 seconds
+    Future.delayed(const Duration(seconds: 5), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
+  }
+
   void _maybeAddBillingHistoryEntry(BillingModel billing) {
-    final alreadyRecorded =
-        (_previousBillingTimestamp != null && billing.lastUpdated.isAtSameMomentAs(_previousBillingTimestamp!)) ||
-        (_previousReadingCount != null && billing.readingCount == _previousReadingCount);
+    final alreadyRecorded = (_previousBillingTimestamp != null &&
+            billing.lastUpdated.isAtSameMomentAs(_previousBillingTimestamp!)) ||
+        (_previousReadingCount != null &&
+            billing.readingCount == _previousReadingCount);
 
     if (!alreadyRecorded) {
       final prevKwh = _previousBillingTotalKwh ?? 0.0;
@@ -191,13 +295,16 @@ class _DashboardPageState extends State<DashboardPage> with LoggerMixin {
           billing.readingCount == 0 || deltaKwh <= 0 || deltaAmount <= 0;
 
       final double entryKwh = resetDetected ? billing.totalKwhUsed : deltaKwh;
-      final double entryAmount = resetDetected ? billing.totalAmount : deltaAmount;
+      final double entryAmount =
+          resetDetected ? billing.totalAmount : deltaAmount;
 
-      billUpdates.insert(0, BillUpdate(
-        energyUsage: entryKwh.abs(),
-        amount: entryAmount.abs(),
-        timestamp: billing.lastUpdated,
-      ));
+      billUpdates.insert(
+          0,
+          BillUpdate(
+            energyUsage: entryKwh.abs(),
+            amount: entryAmount.abs(),
+            timestamp: billing.lastUpdated,
+          ));
 
       if (billUpdates.length > 20) {
         billUpdates.removeLast();
