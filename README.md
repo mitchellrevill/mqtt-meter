@@ -15,8 +15,11 @@ DB access layer, extra logic, bill generation etc
 ### Prerequisites
 - **Docker Desktop**: Required to run the RabbitMQ MQTT broker in a containerized environment
 - **.NET 8.0 SDK**: Required to build and run the DemoWeb.Server API
+- **Visual Studio Code**: Running apps, Visual studio code has worked on all our machines but not sure if rider or VisualStudio will be as successful
+- **C# + C# DevKit VSC Extensions**: Runnings tests and building program
+- **C++ SDKs**: Can be installed from VisualStudio Installer or online
 - **PowerShell**: (Optional) For running the automated startup script
-- **Flutter SDK & Visual Studio Code**: (Optional) Required for mobile client development
+- **Flutter SDK**: (Optional) Required for mobile client development
 
 ---
 
