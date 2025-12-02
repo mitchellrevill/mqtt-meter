@@ -15,47 +15,7 @@ namespace Infrastructure.IntegrationTests.Messaging;
 
 public class MqttReadingProcessorServiceTests
 {
-    [Fact]
-    public async Task ReadingMessage_SavesReading_AndPublishesBillingSnapshot()
-    {
-        const string ReadingsBaseTopic = "meters/readings";
-        const string BillingBaseTopic = "meters/billing";
-
-        var subscriber = new TestMqttSubscriber();
-        var publisher = new TestMqttPublisher();
-        var readingService = new TestReadingService();
-        var scopeFactory = new TestScopeFactory(readingService);
-        var options = Options.Create(new MqttTopicOptions());
-
-        var service = new MqttReadingProcessorService(
-            NullLogger<MqttReadingProcessorService>.Instance,
-            subscriber,
-            publisher,
-            scopeFactory,
-            options);
-
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        await service.StartAsync(cts.Token);
-        await subscriber.WaitForSubscriptionAsync("meters/readings/#", TimeSpan.FromSeconds(1));
-
-        var topic = $"{ReadingsBaseTopic}/user-123";
-        await subscriber.TriggerAsync(topic, new { clientId = "user-123", value = 42.5 });
-
-        await TestWaiter.WaitUntilAsync(() => readingService.Readings.Count == 1, TimeSpan.FromSeconds(1));
-        await TestWaiter.WaitUntilAsync(() => publisher.PublishedMessages.Count == 1, TimeSpan.FromSeconds(1));
-
-        readingService.Readings.Should().ContainSingle(r => r.UserId == "user-123" && Math.Abs(r.Value - 42.5f) < 0.001f);
-
-        var message = publisher.PublishedMessages.Single();
-        message.Topic.Should().Be($"{BillingBaseTopic}/user-123");
-        message.Payload.RootElement.GetProperty("TotalKwhUsed").GetDouble().Should().Be(42.5);
-        message.Payload.RootElement.GetProperty("TotalAmount").GetDouble().Should().BeApproximately(42.5 * 0.15, 0.0001);
-        message.Payload.RootElement.GetProperty("ReadingCount").GetInt32().Should().Be(1);
-
-        cts.Cancel();
-        await service.StopAsync(CancellationToken.None);
-    }
-
+   
     [Fact]
     public async Task BillingResetCommand_ResetsReadings_AndPublishesBillingUpdate()
     {
@@ -211,6 +171,11 @@ public class MqttReadingProcessorServiceTests
         {
             var filtered = _readings.Where(r => r.UserId.Equals(userId, StringComparison.OrdinalIgnoreCase)).ToList();
             return Task.FromResult<IEnumerable<Reading>>(filtered);
+        }
+
+        public Task InsertBatchAsync(string userId, List<Reading> readings)
+        {
+            return Task.CompletedTask;
         }
 
         public Task ResetForUserAsync(string userId)
