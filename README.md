@@ -1,15 +1,3 @@
-# mqtt-meter
-MQTT Based Smart Meter
-
-Architecture 
-Subscriber -- Broker --- Shared Clients( Logic server x, logic server y)
-
-
-Logic Server C#
--------------------------------------
-DB access layer, extra logic, bill generation etc 
-
-
 ## Getting Started
 
 ### Prerequisites
