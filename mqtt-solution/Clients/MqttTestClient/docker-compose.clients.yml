@@ -1,0 +1,45 @@
+version: '3.8'
+
+# This compose file launches multiple MQTT test clients that simulate smart meters.
+# Each client publishes readings to the broker and listens for billing updates.
+#
+# Usage:
+#   docker-compose -f docker-compose.clients.yml up -d --scale meter=20
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: mqtt-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "1883:1883"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - ../../Infrastructure.Mqtt/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ../../Infrastructure.Mqtt/rabbitmq-plugins.conf:/etc/rabbitmq/enabled_plugins:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Scalable meter client service
+  meter:
+    build:
+      context: ../../..
+      dockerfile: mqtt-solution/Clients/MqttTestClient/Dockerfile
+    environment:
+      RabbitMQ__Host: mqtt-rabbitmq
+      RabbitMQ__Port: 1883
+      RabbitMQ__Username: admin
+      RabbitMQ__Password: admin
+      TestClient__PublishIntervalSeconds: 5
+      TestClient__MinimumValue: 0.3
+      TestClient__MaximumValue: 2.5
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
